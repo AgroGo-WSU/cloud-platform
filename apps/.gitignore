@@ -8,6 +8,10 @@ build/
 # VsCode settings, section added by Drew
 .vscode/
 
+# OS junk, section added by Drew
+.DS_Store
+Thumbs.db
+
 # ----- All code below this line is from the standard Node.gitignore template ----- #
 
 # Logs
