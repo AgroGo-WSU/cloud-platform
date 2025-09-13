@@ -1,0 +1,6 @@
+.env
+
+# Terraform provided files that need to be ignored - Drew
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup

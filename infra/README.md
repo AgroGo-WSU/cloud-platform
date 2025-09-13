@@ -3,6 +3,9 @@ This module of our codebase contains all of the infrastructure for our cloud pla
 
 This section is the **Cloud Infrastructure Lead (Drew)'s** responsibility to maintain. Any significant changes to this section of the code (outside an existing task) should be reviewed by him before merging.
 
+# First time setup
+**TODO: Create setup instructions**
+
 # Layers
 Our cloud platform uses several services. To make logical sense of the services, and to give a quick idea of what services are related, they are broken up into the following layers:
 - API Layer
