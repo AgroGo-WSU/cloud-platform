@@ -17,7 +17,7 @@ provider "cloudflare" {
 module "data-layer" {
     source     = "./data-layer"
     account_id = var.account_id
-    name       = "agrogo-db"
+    name       = "playground-agrogo-db"
 
     providers = {
         cloudflare = cloudflare
