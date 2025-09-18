@@ -1,51 +1,55 @@
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
-import { DurableObject } from "cloudflare:workers";
 
-//connects to database
 export interface Env {
-    DB: D1Database;
+	DB: D1Database;
 }
 
-//I looked this up and have not a clue how this works just yet the old
-//way of doing this is not good anymore
-export class StreamingObject extends DurableObject {
-    db: ReturnType<typeof drizzle>;
-    streamId: string | undefined;
+export class StreamingObject {
+	private state: DurableObjectState;
+	private env: Env;
+	private db: ReturnType<typeof drizzle>;
+	private streamId: string;
 
-  constructor(ctx: DurableObjectState, env: Env) {
-    super(ctx, env);
-    
-    this.db = drizzle(env.DB, { schema });
-    this.streamId = ctx.id.name;
+	constructor(state: DurableObjectState, env: Env) {
+		this.state = state;
+		this.env = env;
 
-    }
-   
-    async fetch(request: Request): Promise<Response> {
-        // We only allow POST requests to this endpoint.
-        if (request.method !== 'POST') {
-            return new Response('Method Not Allowed', { status: 405 });
-        }
+		// Drizzle setup with your D1 DB
+		this.db = drizzle(env.DB, { schema });
 
-        try {
-            
-            const rawData = await request.text();
+		// Unique name/id for this Durable Object instance
+		this.streamId = state.id.toString();
+	}
 
-            const deviceId = this.state.id.toString();
+	async fetch(request: Request): Promise<Response> {
+		// Only POST is allowed
+		if (request.method !== "POST") {
+			return new Response("Method Not Allowed", { status: 405 });
+		}
 
-            // Insert the data into the `deviceReadings` table using Drizzle.
-            // We associate it with this object's unique streamId.
-            await this.db.insert(schema.deviceReadings).values({
-                deviceId: deviceId,
-                jsonData: rawData,
-            });
-            
-            console.log(`Successfully saved data for sensor: ${this.streamId}`);
-            return new Response('Data saved successfully', { status: 200 });
+		try {
+			const rawData = await request.text();
 
-        } catch (error) {
-            console.error(`[Durable Object Error] Failed to save data for sensor ${this.streamId}:`, error);
-            return new Response('Internal Server Error while saving data', { status: 500 });
-        }
-    }
+			// Unique device identifier is this DO’s ID
+			const deviceId = this.state.id.toString();
+
+			// Insert into Drizzle/D1
+			await this.db.insert(schema.deviceReadings).values({
+				deviceId,
+				jsonData: rawData,
+			});
+
+			console.log(` Saved data for sensor: ${this.streamId}`);
+			return new Response("Data saved successfully", { status: 200 });
+		} catch (error) {
+			console.error(
+				`Failed to save data for sensor ${this.streamId}:`,
+				error,
+			);
+			return new Response("Internal Server Error while saving data", {
+				status: 500,
+			});
+		}
+	}
 }
