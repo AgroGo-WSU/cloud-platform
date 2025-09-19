@@ -1,4 +1,4 @@
-import { DurableObject } from "cloudflare:workers";
+//import { DurableObject } from "cloudflare:workers";
 
 /**
  * Welcome to Cloudflare Workers! This is your first Durable Objects application.
@@ -14,7 +14,7 @@ import { DurableObject } from "cloudflare:workers";
  */
 
 /** A Durable Object's behavior is defined in an exported Javascript class */
-export class MyDurableObject extends DurableObject<Env> {
+//export class MyDurableObject extends DurableObject<Env> {
 	/**
 	 * The constructor is invoked once upon creation of the Durable Object, i.e. the first call to
 	 * 	`DurableObjectStub::get` for a given identifier (no-op constructors can be omitted)
@@ -22,9 +22,9 @@ export class MyDurableObject extends DurableObject<Env> {
 	 * @param ctx - The interface for interacting with Durable Object state
 	 * @param env - The interface to reference bindings declared in wrangler.jsonc
 	 */
-	constructor(ctx: DurableObjectState, env: Env) {
-		super(ctx, env);
-	}
+	//constructor(ctx: DurableObjectState, env: Env) {
+		//super(ctx, env);
+	//}
 
 	/**
 	 * The Durable Object exposes an RPC method sayHello which will be invoked when when a Durable
@@ -33,12 +33,12 @@ export class MyDurableObject extends DurableObject<Env> {
 	 * @param name - The name provided to a Durable Object instance from a Worker
 	 * @returns The greeting to be sent back to the Worker
 	 */
-	async sayHello(name: string): Promise<string> {
-		return `Hello, ${name}!`;
-	}
-}
+	//async sayHello(name: string): Promise<string> {
+		//return `Hello, ${name}!`;
+	//}
+//}
 
-export default {
+//export default {
 	/**
 	 * This is the standard fetch handler for a Cloudflare Worker
 	 *
@@ -47,18 +47,46 @@ export default {
 	 * @param ctx - The execution context of the Worker
 	 * @returns The response to be sent back to the client
 	 */
-	async fetch(request, env, ctx): Promise<Response> {
+	//async fetch(request, env, ctx): Promise<Response> {
 		// Create a stub to open a communication channel with the Durable Object
 		// instance named "foo".
 		//
 		// Requests from all Workers to the Durable Object instance named "foo"
 		// will go to a single remote Durable Object instance.
-		const stub = env.MY_DURABLE_OBJECT.getByName("foo");
+		//const stub = env.MY_DURABLE_OBJECT.getByName("foo");
 
 		// Call the `sayHello()` RPC method on the stub to invoke the method on
 		// the remote Durable Object instance.
-		const greeting = await stub.sayHello("world");
+		//const greeting = await stub.sayHello("world");
 
-		return new Response(greeting);
-	},
-} satisfies ExportedHandler<Env>;
+		//return new Response(greeting);
+	//},
+//} satisfies ExportedHandler<Env>;
+
+//-------------------------------------------------------------------//
+
+//code for project
+
+import { Hono } from 'hono';
+
+import { StreamingObject } from './StreamingObject';
+
+export interface Env {
+	STREAMING_OBJECT: DurableObjectNamespace;
+}
+
+const app = new Hono<{ Bindings: Env }>();
+
+app.post('/api/data/:id', async (c) => {
+
+	const deviceId = c.req.param('id');
+
+	const doId = c.env.STREAMING_OBJECT.idFromName(deviceId);
+  	const stub = c.env.STREAMING_OBJECT.get(doId);
+
+  return stub.fetch(c.req.raw);
+});
+
+export default app;
+
+export { StreamingObject };
