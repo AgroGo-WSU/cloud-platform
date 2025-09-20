@@ -10,7 +10,7 @@
 	"migrations": [
 		{
 			"new_sqlite_classes": [
-				"MyDurableObject"
+				"StreamingObject"
 			],
 			"tag": "v1"
 		}
@@ -23,6 +23,13 @@
 			}
 		]
 	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "agrogo-db",
+			//"database_id": // Add database's UUID here. DO NOT COMMIT!!!!! - Drew
+		}
+	],
 	"observability": {
 		"enabled": true
 	}

@@ -16,7 +16,6 @@ export const deviceStream = sqliteTable("deviceStream", {
 
     // human readible name to be used with frontend ui.
     deviceStreamName: text("deviceStreamName").notNull(),
-
     // this is jsut a way to keep track of registered device creations.
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
