@@ -31,17 +31,39 @@ export class StreamingObject {
 		try {
 			const rawData = await request.text();
 
+			// Prefer canonical header-provided canonical id/name (safer); fallback to DO id - Drew
+			const canonicalKey: string | unknown = request.headers.get('x-device-key') || this.state.id.toString();
+
 			// Unique device identifier is this DO’s ID
 			const deviceId = this.state.id.toString();
 
-			// Insert into Drizzle/D1
-			await this.db.insert(schema.deviceReadings).values({
-				deviceId,
-				jsonData: rawData,
-			});
+			// Provide multiple fallback checks to increase liklihood of finding the deviceStream entry - Drew
+			const find = await this.env.DB.prepare(
+				`SELECT id FROM deviceStream WHERE id = ? OR deviceStreamName = ?`
+			).bind(canonicalKey, canonicalKey).all();
 
-			console.log(` Saved data for sensor: ${this.streamId}`);
-			return new Response("Data saved successfully", { status: 200 });
+			let deviceIdToUse: string | unknown = canonicalKey;
+
+			if(!find || !find.results || find.results.length === 0) {
+				// Insert a new device row using a canonicalKey as id and set name to canonicalKey - Drew
+				await this.env.DB.prepare(
+					`INSERT INTO deviceStream (id, deviceStreamName, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
+				).bind(canonicalKey, canonicalKey).run();
+				deviceIdToUse = canonicalKey;
+			} else {
+				deviceIdToUse = find.results[0].id;
+			}
+
+			// Insert into Drizzle/D1
+			await this.env.DB.prepare(
+				`INSERT INTO device_readings (id, device_id, json_data, received_at)
+				VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
+			).bind(crypto.randomUUID(), deviceIdToUse, rawData).run();
+
+			console.log(`Saved data for sensor: ${this.streamId} - stored for device ${deviceIdToUse}`);
+			return new Response("Data saved successfully", { 
+				status: 200 
+			});
 		} catch (error) {
 			console.error(
 				`Failed to save data for sensor ${this.streamId}:`,

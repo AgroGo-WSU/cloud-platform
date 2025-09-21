@@ -79,12 +79,18 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.post('/api/data/:id', async (c) => {
 
-	const deviceId = c.req.param('id');
+	const deviceIdOrName = c.req.param('id'); // e.g. "Raspi001" or a unique UUID - Drew
 
-	const doId = c.env.STREAMING_OBJECT.idFromName(deviceId);
+	const doId = c.env.STREAMING_OBJECT.idFromName(deviceIdOrName);
   	const stub = c.env.STREAMING_OBJECT.get(doId);
 
-  return stub.fetch(c.req.raw);
+	// Forward original request but attach the original id in a header
+	const original = c.req.raw;
+	const headers = new Headers(original.headers);
+	headers.set('x-device-key', deviceIdOrName); // Pass canonical id or name - Drew
+
+	const forwarded = new Request(original, { headers });
+	return stub.fetch(forwarded);
 });
 
 export default app;
