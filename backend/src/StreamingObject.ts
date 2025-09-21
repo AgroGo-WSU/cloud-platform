@@ -23,19 +23,33 @@ export class StreamingObject {
 	}
 
 	async fetch(request: Request): Promise<Response> {
-		// Only POST is allowed
-		if (request.method !== "POST") {
-			return new Response("Method Not Allowed", { status: 405 });
+		switch (request.method) {
+			case "POST":
+				return this.handlePost(request);
+			case "GET":
+				// Pull device identifier from header or fallback
+				const canonicalKey: string = request.headers.get("x-device-key") || this.state.id.toString();
+				return this.handleGet(canonicalKey);
+			default:
+				return new Response("Method not allowed", { status: 405 });
 		}
+	}
 
+	/**
+	 * Holds POST logic for StreamingObject
+	 * 
+	 * Posts a new sensor reading
+	 * 
+	 * Original code created by Nick
+	 * 
+	 * Drew 9.21 - Fallback checks added
+	 */
+	private async handlePost(request: Request): Promise<Response> {
 		try {
 			const rawData = await request.text();
 
 			// Prefer canonical header-provided canonical id/name (safer); fallback to DO id - Drew
 			const canonicalKey: string | unknown = request.headers.get('x-device-key') || this.state.id.toString();
-
-			// Unique device identifier is this DO’s ID
-			const deviceId = this.state.id.toString();
 
 			// Provide multiple fallback checks to increase liklihood of finding the deviceStream entry - Drew
 			const find = await this.env.DB.prepare(
@@ -62,12 +76,52 @@ export class StreamingObject {
 
 			console.log(`Saved data for sensor: ${this.streamId} - stored for device ${deviceIdToUse}`);
 			return new Response("Data saved successfully", { 
-				status: 200 
+				status: 200
 			});
 		} catch (error) {
 			console.error(
 				`Failed to save data for sensor ${this.streamId}:`,
 				error,
+			);
+			return new Response("Internal Server Error while saving data", {
+				status: 500,
+			});
+		}
+	}
+
+	/**
+	 * Holds GET logic for StreamingObject.
+	 * 
+	 * @returns The last 10 reads for the device passed
+	 * 
+	 * Drew 9.21 - Created function
+	 */
+	private async handleGet(deviceName: string): Promise<Response> {
+		try {
+			// Device is passed into the function as a name, but saved in the DB as an ID
+			// Convert the name to the corresponding ID
+			const deviceQuery = await this.env.DB.prepare(
+				`SELECT id FROM deviceStream WHERE id = ? OR deviceStreamName = ?`
+			).bind(deviceName, deviceName).all();
+			const deviceId = deviceQuery.results[0].id;
+
+			// Get the last 10 readings from this sensor
+			const readings = await this.env.DB.prepare(
+				`SELECT * FROM device_readings
+				WHERE device_id = ? OR device_id IN
+					(SELECT id FROM deviceStream WHERE deviceStreamName = ?)
+				ORDER BY received_at DESC
+				LIMIT 10`
+			).bind(deviceId, deviceId).all();
+
+			return new Response(JSON.stringify(readings.results), {
+				headers: {"Content-Type": "application/json"},
+				status: 200
+			})
+		} catch (error) {
+			console.error(
+				`GET failed ${this.streamId}:`,
+				error
 			);
 			return new Response("Internal Server Error while saving data", {
 				status: 500,
