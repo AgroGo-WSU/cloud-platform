@@ -114,7 +114,13 @@ export class StreamingObject {
 				LIMIT 10`
 			).bind(deviceId, deviceId).all();
 
-			return new Response(JSON.stringify(readings.results), {
+			// Parse JSON string fields into real objects
+			const parsed = readings.results.map(r => ({
+				...r,
+				json_data: JSON.parse(r.json_data as string)
+			}))
+
+			return new Response(JSON.stringify(parsed), {
 				headers: {"Content-Type": "application/json"},
 				status: 200
 			})
