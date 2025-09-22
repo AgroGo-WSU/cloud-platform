@@ -1,3 +1,27 @@
+/**
+ * index.ts
+ *
+ * Entry point for defining API routes in the Hono application.
+ * 
+ * This file wires incoming HTTP requests to the correct Durable Object
+ * instance (`StreamingObject`), based on either a device UUID or a
+ * human-readable device name provided in the request URL.
+ *
+ * - POST /api/data/:id Forwards incoming sensor data payloads to the 
+ *   corresponding Durable Object for processing and database insertion.
+ * 
+ * - GET /api/data/:id Retrieves the latest sensor readings for a device 
+ *   by delegating the query to the corresponding Durable Object.
+ * 
+ * All requests are forwarded with the original device identifier attached
+ * as the `x-device-key` header, allowing the Durable Object to correctly
+ * resolve and persist/query data.
+ *
+ * This file should remain focused on routing logic. Device handling logic,
+ * business methods, and database interactions should live in their own
+ * dedicated modules for clarity and maintainability.
+ */
+
 import { Hono } from 'hono';
 
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
@@ -9,16 +33,6 @@ export interface Env {
 const app = new Hono<{ Bindings: Env }>();
 
 /**
- * POST request on the /api/data/:id endpoint
- * Accepts sensor data from a device, where `:id` can be either the device's
- * UUID (from the deviceStream table) or a human-readable name (e.g. "Raspi001").
- * 
- * Looks up the corresponding Durable Object instance by that ID or name.
- * 
- * Forwards the request payload to the Durable Object, attaching the original
- * device key in the `x-device-key` header so the Durable Object can resolve it
- * to the correct device ID for database insertion
- * 
  * Created by Nick
  * 
  * Forwarding logic added by Drew on 9.21
@@ -40,18 +54,6 @@ app.post('/api/data/:id', async (c) => {
 });
 
 /**
- * GET request on the /api/data/:id endpoint
- * 
- * Returns the last 10 sensor readings for a device, where `:id` can be either 
- * the device's UUID (from the deviceStream table) or a human-readable name 
- * (e.g. "Raspi001").
- * 
- * Looks up the corresponding Durable Object instance by that ID or name.
- * 
- * Forwards the request to the Durable Object, attaching the original device key 
- * in the `x-device-key` header so the Durable Object can resolve it to the 
- * correct device ID for database lookup.
- * 
  * Created by Drew on 9.21
  */
 app.get('/api/data/:id', async (c) => {

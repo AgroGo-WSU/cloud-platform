@@ -7,8 +7,6 @@ import { sql } from "drizzle-orm";
  * Currently is does not auto generate device IDs so we will want to give each
  * id maunually and then we can also assign names to them as well from the RasPi side.
  */
-
-
 export const deviceStream = sqliteTable("deviceStream", {
     
     // we will track pi's as the primary key (later we will go by user)

@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../../schema";
+import { DB, getDB, getOrCreateDeviceId, getRecentReadings } from "./databaseQueries";
 
 export interface Env {
 	DB: D1Database;
@@ -8,7 +8,7 @@ export interface Env {
 export class StreamingObject {
 	private state: DurableObjectState;
 	private env: Env;
-	private db: ReturnType<typeof drizzle>;
+	private db: DB;
 	private streamId: string;
 
 	constructor(state: DurableObjectState, env: Env) {
@@ -16,7 +16,7 @@ export class StreamingObject {
 		this.env = env;
 
 		// Drizzle setup with your D1 DB
-		this.db = drizzle(env.DB, { schema });
+		this.db = getDB(env); // Updated to use shared Drizzle method
 
 		// Unique name/id for this Durable Object instance
 		this.streamId = state.id.toString();
@@ -36,45 +36,32 @@ export class StreamingObject {
 	}
 
 	/**
-	 * Holds POST logic for StreamingObject
+	 * Handles POST requests incoming by saving a new sensor reading.
 	 * 
-	 * Posts a new sensor reading
+	 * Parses the incoming request body, ensures the device exists (creating it if
+	 * necessary), and stores the reading in the database.
 	 * 
 	 * Original code created by Nick
 	 * 
 	 * Drew 9.21 - Fallback checks added
+	 * 
+	 * Drew 9.22 - Refactored to use shared Drizzle queries
 	 */
 	private async handlePost(request: Request): Promise<Response> {
 		try {
 			const rawData = await request.text();
+			const deviceKey = request.headers.get("x-device-key") || this.streamId;
+			
+			const deviceId = await getOrCreateDeviceId(this.db, deviceKey);
 
-			// Prefer canonical header-provided canonical id/name (safer); fallback to DO id - Drew
-			const canonicalKey: string | unknown = request.headers.get('x-device-key') || this.state.id.toString();
+			await this.db.insert(schema.deviceReadings).values({
+				id: crypto.randomUUID(),
+				deviceId: deviceId,
+				jsonData: rawData,
+				receivedAt: new Date().toISOString(),
+			});
 
-			// Provide multiple fallback checks to increase liklihood of finding the deviceStream entry - Drew
-			const find = await this.env.DB.prepare(
-				`SELECT id FROM deviceStream WHERE id = ? OR deviceStreamName = ?`
-			).bind(canonicalKey, canonicalKey).all();
-
-			let deviceIdToUse: string | unknown = canonicalKey;
-
-			if(!find || !find.results || find.results.length === 0) {
-				// Insert a new device row using a canonicalKey as id and set name to canonicalKey - Drew
-				await this.env.DB.prepare(
-					`INSERT INTO deviceStream (id, deviceStreamName, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
-				).bind(canonicalKey, canonicalKey).run();
-				deviceIdToUse = canonicalKey;
-			} else {
-				deviceIdToUse = find.results[0].id;
-			}
-
-			// Insert into Drizzle/D1
-			await this.env.DB.prepare(
-				`INSERT INTO device_readings (id, device_id, json_data, received_at)
-				VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
-			).bind(crypto.randomUUID(), deviceIdToUse, rawData).run();
-
-			console.log(`Saved data for sensor: ${this.streamId} - stored for device ${deviceIdToUse}`);
+			console.log(`Saved data for sensor: ${this.streamId} - stored for device ${deviceId}`);
 			return new Response("Data saved successfully", { 
 				status: 200
 			});
@@ -90,37 +77,26 @@ export class StreamingObject {
 	}
 
 	/**
-	 * Holds GET logic for StreamingObject.
+	 * Handles GET requests by returning recent readings for a device.
+	 *
+	 * Looks up or creates the device by key, then retrieves the last 10 readings
+	 * from the database.
+	 *
+	 * TODO: Add support for specifying the number of readings via query parameter.
 	 * 
+	 * @param deviceKey - Name of the device who's readings to return
 	 * @returns The last 10 reads for the device passed
 	 * 
 	 * Drew 9.21 - Created function
+	 * 
+	 * Drew 9.22 - Refactored to use shared Drizzle queries
 	 */
-	private async handleGet(deviceName: string): Promise<Response> {
+	private async handleGet(deviceKey: string): Promise<Response> {
 		try {
-			// Device is passed into the function as a name, but saved in the DB as an ID
-			// Convert the name to the corresponding ID
-			const deviceQuery = await this.env.DB.prepare(
-				`SELECT id FROM deviceStream WHERE id = ? OR deviceStreamName = ?`
-			).bind(deviceName, deviceName).all();
-			const deviceId = deviceQuery.results[0].id;
+			const deviceId = await getOrCreateDeviceId(this.db, deviceKey);
+			const readings = await getRecentReadings(this.db, deviceId, 10);
 
-			// Get the last 10 readings from this sensor
-			const readings = await this.env.DB.prepare(
-				`SELECT * FROM device_readings
-				WHERE device_id = ? OR device_id IN
-					(SELECT id FROM deviceStream WHERE deviceStreamName = ?)
-				ORDER BY received_at DESC
-				LIMIT 10`
-			).bind(deviceId, deviceId).all();
-
-			// Parse JSON string fields into real objects
-			const parsed = readings.results.map(r => ({
-				...r,
-				json_data: JSON.parse(r.json_data as string)
-			}))
-
-			return new Response(JSON.stringify(parsed), {
+			return new Response(JSON.stringify(readings), {
 				headers: {"Content-Type": "application/json"},
 				status: 200
 			})
