@@ -68,6 +68,8 @@
 //code for project
 
 import { Hono } from 'hono';
+// CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
+import { cors } from 'hono/cors';
 
 import { StreamingObject } from './StreamingObject';
 
@@ -76,6 +78,9 @@ export interface Env {
 }
 
 const app = new Hono<{ Bindings: Env }>();
+
+// telling app to use CORS headers - Madeline
+app.use('*', cors());
 
 /**
  * POST request on the /api/data/:id endpoint
