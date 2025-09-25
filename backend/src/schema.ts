@@ -1,3 +1,16 @@
+/**
+ * schema.ts
+ * 
+ * Centralized location for all Drizzle ORM table definitions.
+ * 
+ * This file defines the database schema used by the application.
+ * Each table should be declared here to ensure a single source of truth.
+ *
+ * Tables:
+ * - deviceStream: Master list of all Raspberry Pi devices.
+ * - deviceReadings: Stores raw JSON readings received from devices.
+ */
+
 import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
@@ -7,8 +20,6 @@ import { sql } from "drizzle-orm";
  * Currently is does not auto generate device IDs so we will want to give each
  * id maunually and then we can also assign names to them as well from the RasPi side.
  */
-
-
 export const deviceStream = sqliteTable("deviceStream", {
     
     // we will track pi's as the primary key (later we will go by user)
