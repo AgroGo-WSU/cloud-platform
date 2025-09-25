@@ -1,3 +1,13 @@
+/**
+ * databaseQueries.ts
+ *
+ * Provides helper functions and type definitions for interacting with the
+ * Cloudflare D1 database using Drizzle ORM.
+ *
+ * All database access from workers or durable objects should go through
+ * this module to ensure consistent query patterns and type safety.
+ */
+
 import { drizzle, DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "../../schema";
 import { or, eq, desc } from "drizzle-orm";

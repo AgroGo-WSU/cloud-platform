@@ -1,3 +1,21 @@
+/**
+ * StreamingObject.ts
+ *
+ * Defines the Durable Object responsible for handling streaming device data.
+ *
+ * Responsibilities:
+ * - Provides an isolated, per-device execution context using Cloudflare Durable Objects.
+ * - Handles incoming HTTP requests:
+ *   - **POST** Stores new sensor readings in the database.
+ *   - **GET** Retrieves recent readings for a given device.
+ * - Ensures devices are registered (creates device records if they do not exist).
+ * - Uses shared Drizzle-based query helpers (`databaseQueries.ts`) for all
+ *   database interactions.
+ *
+ * This Durable Object serves as the main entry point for device communication,
+ * ensuring reliable ingestion and retrieval of IoT data on a per-device basis.
+ */
+
 import * as schema from "../../schema";
 import { DB, getDB, getOrCreateDeviceId, getRecentReadings } from "./databaseQueries";
 

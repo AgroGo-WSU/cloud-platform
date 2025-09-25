@@ -27,7 +27,7 @@
 		{
 			"binding": "DB",
 			"database_name": "agrogo-db",
-			//"database_id": // Add database's UUID here. DO NOT COMMIT!!!!! - Drew
+			//"database_id": ""// Add database's UUID here. DO NOT COMMIT!!!!! - Drew
 		}
 	],
 	"observability": {
