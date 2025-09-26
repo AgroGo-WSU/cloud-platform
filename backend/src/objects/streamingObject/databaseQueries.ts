@@ -11,6 +11,7 @@
 import { drizzle, DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "../../schema";
 import { or, eq, desc } from "drizzle-orm";
+import { create } from "domain";
 
 /**
  * Strongly typed Drizzle database instance
@@ -32,7 +33,46 @@ export type DB = DrizzleD1Database<typeof schema>;
  */
 export function getDB(env: {DB: D1Database}): DB {
     return drizzle(env.DB, { schema })
+
+    // ----- USER Qurries ------ -Nick 9/26
 }
+/**
+ * 
+ * @param db creates a user record if one does not exist
+ * @returns An ubject indicating if the user was newly created.
+ * @param userId 
+ * @returns 
+ */
+export async function upsertUser(db:DB, userId: string){
+    const existingUser = await db.query.users.findFirst({
+        where: eq(schema.users.id, userId)
+    });
+
+    if (!existingUser){
+        await db.insert(schema.users).values({ id: userId }).execute();
+        return {created: true};
+    }
+    return {created: false};
+}
+
+//fetch all devices associated with user ID
+export async function getUserDevices(db: DB, userID: string) {
+    return db.query.deviceStream.findMany({
+        where: eq(schema.deviceStream.userID, userID)
+    });
+    
+}
+
+//creates device and links to user
+export async function createUserDevices(db:DB, userID: string, deviceName: string) {
+    const newDevice = await db.insert(schema.deviceStream).values({
+        userID: userID,
+        deviceStreamName : deviceName
+    }).returning();
+    return newDevice[0];
+    
+}
+
 
 /**
  * Retrieves reent readings for a given device
@@ -55,7 +95,10 @@ export async function getOrCreateDeviceId(db: DB, deviceKey: string): Promise<st
         return device.id;
     }
 
-    // If not found, insert a new device
+    throw new Error(`device with key "${deviceKey}" could not be found.`);
+   /** 
+    * I dont think we need this anymore as we only allow device creation through user context
+    * // If not found, insert a new device
     await db.insert(schema.deviceStream).values({
         id: deviceKey,
         deviceStreamName: deviceKey,
@@ -63,6 +106,7 @@ export async function getOrCreateDeviceId(db: DB, deviceKey: string): Promise<st
     });
 
     return deviceKey;
+    */
 }
 
 /**

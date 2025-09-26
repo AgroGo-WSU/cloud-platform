@@ -7,6 +7,17 @@
 	"name": "backend",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-09-11",
+	"vars":{
+		"FIREBASE_PROJECT_ID": ""
+		//TODO: set Firebase project ID in .ENV"
+	},
+	"kv_namespaces": [
+		{
+			"binding": "PUBLIC_KEY_CACHE",
+			"id": "",
+			
+		}
+	],
 	"migrations": [
 		{
 			"new_sqlite_classes": [

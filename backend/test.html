@@ -1,0 +1,29 @@
+<!-- test.html - for getting a test token -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+
+<button id="loginBtn">Sign in with Google</button>
+
+<script>
+  // PASTE YOUR FIREBASE CONFIGURATION HERE
+  const firebaseConfig = {
+    apiKey: "...",
+    authDomain: "...",
+    projectId: "...",
+    // ...
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const auth = firebase.getAuth(app);
+
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    const provider = new firebase.GoogleAuthProvider();
+    firebase.signInWithPopup(auth, provider)
+      .then((result) => {
+        result.user.getIdToken().then((token) => {
+          console.log("COPY THIS TOKEN:", token);
+          alert('Token has been printed to the console!');
+        });
+      }).catch((error) => console.error(error));
+  });
+</script>

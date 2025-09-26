@@ -25,17 +25,80 @@
 import { Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
+import { getFirebaseToken } from '@hono/firebase-auth';
 
+//local imports
+import { firebaseAuthMiddleware } from './objects/authObject/auth';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
+import { getDB, upsertUser, createUserDevices, getUserDevices } from './objects/streamingObject/databaseQueries';
 
+//interface enviorment for wrangler -Nick 9/18 updated 9/26
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
+	FIREBASE_PROJECT_ID: string; 
+	PUBLIC_KEYS_CACHE: KVNamespace;
+	DB: D1Database;
 }
 
 const app = new Hono<{ Bindings: Env }>();
 
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
+// tells app to use auth.ts for protected routes -Nick
+app.use('/api/user/*', firebaseAuthMiddleware());
+
+// ----- Protected user routes -----
+
+/**
+ *  post for regsiter user
+ */
+app.post('/api/user/register', async (c) =>{
+	const decodedToken = getFirebaseToken(c);
+	//type gaurd bc typescript :_)
+	if (!decodedToken) {
+        return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const db = getDB(c.env);
+    const { created } = await upsertUser(db, decodedToken.sub);
+
+    if (created) {
+        return c.json({ message: 'User registered successfully' }, 201);
+    }
+    return c.json({ message: 'User already exists' }, 200);
+});
+
+//post for creating device
+app.post('/api/user/devices', async (c) =>{
+	const db = getDB(c.env);
+	const decodedToken = getFirebaseToken(c);
+
+	if (!decodedToken) {
+        return c.json({ error: 'Unauthorized: Invalid token' }, 401);
+    }
+
+    const { deviceName } = await c.req.json<{ deviceName: string }>();
+
+    if (!deviceName) {
+        return c.json({ error: 'Device name is required' }, 400);
+    }
+    
+    const newDevice = await createUserDevices(db, decodedToken.sub, deviceName);
+    return c.json({ message: 'Device added successfully', device: newDevice }, 201);
+});
+
+//get devices for user
+app.get('/api/user/devices', async (c) => {
+	const db = getDB(c.env);
+    const decodedToken = getFirebaseToken(c);
+
+    if (!decodedToken) {
+        return c.json({ error: 'Unauthorized: Invalid token' }, 401);
+    }
+
+    const devices = await getUserDevices(db, decodedToken.sub);
+    return c.json(devices);
+})
 
 /**
  * Created by Nick
