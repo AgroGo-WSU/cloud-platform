@@ -25,34 +25,50 @@
 import { Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
-
+import { getFirebaseToken, verifyFirebaseAuth} from '@hono/firebase-auth'
+import { getDB, createZone } from './objects/streamingObject/databaseQueries';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
+	FIREBASE_PROJECT_ID: string;
+	DB: D1Database;
 }
 
 const app = new Hono<{ Bindings: Env }>();
 
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
+app.use('/api/data/*', async (c, next) =>{
+const firebaseAuth = verifyFirebaseAuth({
+	projectId: c.env.FIREBASE_PROJECT_ID
+	});
+	return firebaseAuth(c, next)
+});
 
 /**
  * Created by Nick
  * 
  * Forwarding logic added by Drew on 9.21
+ * Forwarding logic protected with firebase by Nick 10.1
  */
-app.post('/api/data/:id', async (c) => {
 
-	const deviceIdOrName = c.req.param('id'); // e.g. "Raspi001" or a unique UUID - Drew
 
-	const doId = c.env.STREAMING_OBJECT.idFromName(deviceIdOrName);
+app.post('/api/data/:zoneId', async (c) => {
+
+	const zoneId = c.req.param('zoneId'); //Fix this later if you like drew I am just using zone uuid
+
+	const doId = c.env.STREAMING_OBJECT.idFromName(zoneId);
   	const stub = c.env.STREAMING_OBJECT.get(doId);
 
 	// Forward original request but attach the original id in a header
 	const original = c.req.raw;
 	const headers = new Headers(original.headers);
-	headers.set('x-device-key', deviceIdOrName); // Pass canonical id or name - Drew
+	const decodedToken = getFirebaseToken(c);
+	if(decodedToken){
+		headers.set('x-user-id', decodedToken.uid);
+	}
+	headers.set('x-zone-id', zoneId);
 
 	const forwarded = new Request(original, { headers });
 	return stub.fetch(forwarded);
@@ -61,23 +77,41 @@ app.post('/api/data/:id', async (c) => {
 /**
  * Created by Drew on 9.21
  */
-app.get('/api/data/:id', async (c) => {
-	const deviceIdOrName = c.req.param('id');
-
-	const doId = c.env.STREAMING_OBJECT.idFromName(deviceIdOrName);
+app.get('/api/data/:zoneId', async (c) => {
+	const zoneId = c.req.param('zoneId');
+	const doId = c.env.STREAMING_OBJECT.idFromName(zoneId);
 	const stub = c.env.STREAMING_OBJECT.get(doId);
-
-	// Forward original request but attach the original id in a header
+	
 	const headers = new Headers(c.req.raw.headers);
-	headers.set('x-device-key', deviceIdOrName); // Pass canonical id or name - Drew
-
+	const decodedToken = getFirebaseToken(c);
+	// Forward original request but attach the original id in a header
+	if(decodedToken){
+		headers.set('x-user-id', decodedToken.uid); // Pass canonical id or name - Drew
+	}
 	const forwarded = new Request(c.req.url, {
 		method: "GET",
 		headers
 	});
 	return stub.fetch(forwarded);
 });
+//wrote route for zone creation nick 10.3
+app.post('/api/zones', async (c) => {
+	const decodedToken = getFirebaseToken(c);
+	if (!decodedToken) {
+		return c.json({ error: 'Unauthorized' }, 401);
+	}
+
+	const { zoneName } = await c.req.json();
+	if (!zoneName) {
+		return c.json({ error: 'zoneName is required' }, 400);
+	}
+
+	const db = getDB({ DB: c.env.DB });
+	const newZoneId = await createZone(db, decodedToken.uid, zoneName);
+
+	return c.json({ zoneId: newZoneId, zoneName: zoneName });
+});
+
 
 export default app;
-
 export { StreamingObject };
