@@ -27,6 +27,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
+import { emailDistributionHandler } from "./workers/emailDistributionWorker/emailDistributionWorker";
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
@@ -76,6 +77,13 @@ app.get('/api/data/:id', async (c) => {
 		headers
 	});
 	return stub.fetch(forwarded);
+});
+
+/**
+ * Created by Drew on 10.4
+ */
+app.post('/api/sendEmail', async (c) => {
+	return emailDistributionHandler.fetch(c.req.raw, c.env);
 });
 
 export default app;
