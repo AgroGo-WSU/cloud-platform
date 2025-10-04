@@ -35,35 +35,42 @@ export function getDB(env: {DB: D1Database}): DB {
 }
 
 /**
- * Retrieves reent readings for a given device
+ * Creates a new user in the database if they do not already exist.
+ * This should be called after a user successfully authenticates with Firebase.
  * 
  * @param db - The database client
- * @param deviceKey - The device UUID or name to find/create
- * @returns The resolved device ID
- * 
- * Drew 9.22 Created method
+ * @param userId - The device UUID or name to find/create
+ * -method created nick 10.1
  */
-export async function getOrCreateDeviceId(db: DB, deviceKey: string): Promise<string> {
-    const device = await db.query.deviceStream.findFirst({
-        where: or(
-            eq(schema.deviceStream.id, deviceKey),
-            eq(schema.deviceStream.deviceStreamName, deviceKey),
-        ),
+export async function createUser(db: DB, userId: string): Promise<void> {
+    const user = await db.query.users.findFirst({
+        where: eq(schema.users.id, userId),
     });
 
-    if(device) {
-        return device.id;
+    if (!user) {
+        await db.insert(schema.users).values({ id: userId });
     }
-
-    // If not found, insert a new device
-    await db.insert(schema.deviceStream).values({
-        id: deviceKey,
-        deviceStreamName: deviceKey,
-        createdAt: new Date().toISOString(),
-    });
-
-    return deviceKey;
 }
+/**
+ * Creates a new zone for a given user.
+ * This would be called from an endpoint that the user interacts with on the web app.
+ *
+ * @param db - The database client
+ * @param userId - The ID of the user creating the zone
+ * @param zoneName - The name for the new zone
+ * @returns The ID of the newly created zone
+ * -method created by nick 10.1
+ */
+export async function createZone(db: DB, userId: string, zoneName: string): Promise<string> {
+    const newZone = {
+        id: crypto.randomUUID(),
+        userId: userId,
+        zoneName: zoneName,
+    };
+    await db.insert(schema.zones).values(newZone);
+    return newZone.id;
+}
+
 
 /**
  * Find a device ID by name or UUID. If not found, insert a new row.
@@ -74,12 +81,13 @@ export async function getOrCreateDeviceId(db: DB, deviceKey: string): Promise<st
  * @returns A list of recent device readings ordered by received timestamp
  * 
  * Drew 9.22 Created method
+ * updated 10.2 -nick
  */
-export async function getRecentReadings(db: DB, deviceId: string, limit = 10) {
+export async function getRecentReadings(db: DB, zoneId: string, limit = 10) {
     return db
         .select()
         .from(schema.deviceReadings)
-        .where(eq(schema.deviceReadings.deviceId, deviceId))
+        .where(eq(schema.deviceReadings.zoneId, zoneId))
         .orderBy(desc(schema.deviceReadings.receivedAt))
         .limit(limit)
 }

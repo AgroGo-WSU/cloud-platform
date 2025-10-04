@@ -11,22 +11,33 @@
  * - deviceReadings: Stores raw JSON readings received from devices.
  */
 
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 /**
- * Device Stream Table
- * -This table contains the masterlist for all of the RasPi devices we will use.
- * Currently is does not auto generate device IDs so we will want to give each
- * id maunually and then we can also assign names to them as well from the RasPi side.
+ * Users Table
+ * - This table contains the master list for all authenticated users,
+ * using their Firebase UID as the primary key.
+ * table added by nick 10.2
  */
-export const deviceStream = sqliteTable("deviceStream", {
-    
-    // we will track pi's as the primary key (later we will go by user)
+export const users = sqliteTable("users",{
     id: text("id").primaryKey(),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+})
 
+/**
+ * Zone Table
+ * -This table contains the masterlist for all of the Zones for users
+ * each time a users adds a zone to there account to monitor a uuid is created
+ * and it gets associated with the users firebase id
+ * table added by nick 10.2
+ */
+export const zones = sqliteTable("zones", {
+    
+    id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()),
+    userId: text("user_id").notNull().references(() => users.id),
     // human readible name to be used with frontend ui.
-    deviceStreamName: text("deviceStreamName").notNull(),
+    zoneName: text("zone_name").notNull(),
     // this is jsut a way to keep track of registered device creations.
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
@@ -39,7 +50,7 @@ export const deviceStream = sqliteTable("deviceStream", {
  */
 export const deviceReadings = sqliteTable("device_readings",{
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()), // this is used to give tracking to the json packets
-    deviceId: text("device_id").notNull().references(() => deviceStream.id), // linking Pi ID back from json POST
+    zoneId: text("zone_id").notNull().references(() => zones.id), // linking zone ID back from json POST
     jsonData: text("json_data").notNull(),
     receivedAt: text("received_at").default(sql`CURRENT_TIMESTAMP`).notNull(), // so we can tell when we've recived json data
 });
