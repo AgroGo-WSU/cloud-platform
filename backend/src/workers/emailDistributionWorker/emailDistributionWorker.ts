@@ -1,50 +1,52 @@
 export type ResendResponse = { id: string };
 
 /**
- * Handles outbound email distribution via the Resend API.
+ * Sends an outbound email using the Resend API.
  *
- * This Cloudflare Worker-compatible handler accepts an HTTP request, constructs
- * an email payload, and sends it to the Resend API using the configured API key.
- * It returns a standardized HTTP `Response` object containing either a success message
- * with the Resend email ID or an error message if sending fails.
+ * This handler is designed for use within a Cloudflare Worker or Hono-based API route.
+ * It constructs an email payload from provided parameters and sends it through
+ * the Resend API. A standardized `Response` object is returned to indicate
+ * success or failure.
  *
  * @async
  * @function fetch
  * @param {Request} request - The incoming HTTP request triggering the email dispatch.
- * @param {any} env - The environment variables available to the worker (e.g., API keys, configuration).
- * @returns {Promise<Response>} A `Response` object representing the result of the email operation.
+ * @param {any} env - The environment bindings available to the worker (e.g., secrets, configuration).
+ * @param {string} recipient - The target recipient’s email address.
+ * @param {string} subject - The subject line of the email.
+ * @param {string} message - The plain-text body of the email.
+ * @param {string} sender - The sender’s email address (must be verified through Resend).
+ * @returns {Promise<Response>} A standardized `Response` indicating the result of the email send attempt.
  *
  * @typedef {Object} ResendResponse
- * @property {string} id - The unique Resend identifier for the sent email.
+ * @property {string} id - The unique identifier returned by Resend for the sent email.
  *
- * @throws {Error} When the Resend API call fails or returns a non-2xx status code.
+ * @throws {Error} Throws if the Resend API request fails, the network call errors out,
+ * or the response body cannot be parsed as JSON.
  *
- * @example
- * const response = await emailDistributionHandler.fetch(request, env);
- * console.log(await response.text());
- *
- * @todo Make `recipient`, `subject`, and `message` dynamic — currently hardcoded.
- * @todo Move the Resend API key (`Authorization` header) to an environment variable.
- * @todo Add input validation to ensure required fields are present before sending.
- * @todo Add logging or metrics for email send attempts and failures.
- * @todo Distribute emails from our agrogo.org (once it's registered)
+ * @todo Move the Resend API key (`Authorization` header) into an environment variable (`env.RESEND_API_KEY`).
+ * @todo Add schema validation for `recipient`, `subject`, `message`, and `sender` to ensure all required fields are valid.
+ * @todo Log all email send attempts and failures for observability.
+ * @todo Replace the placeholder sender with a verified domain-based address (e.g., `noreply@agrogo.org`).
  */
 export const emailDistributionHandler = {
-    async fetch(request: Request, env: any): Promise<Response> {
-        // TODO: currently statuc values, make these dynamic
-        const recipient = "agrogodev@gmail.com";
-        const subject = "Hello from AgroGo + Resend";
-        const message = "Testing to see if this went through";
-
+    async fetch(
+        request: Request,
+        env: any,
+        recipient: string,
+        subject: string,
+        message: string,
+        sender: string
+    ): Promise<Response> {
         try {
             const response = await fetch("https://api.resend.com/emails", {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer RESEND_API_KEY_HERE`,
+                    "Authorization": `Bearer API_KEY_HERE`, // DO NOT COMMIT API
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    from: "onboarding@resend.dev",
+                    from: sender,
                     to: recipient,
                     subject: subject,
                     text: message,

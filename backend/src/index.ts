@@ -80,10 +80,37 @@ app.get('/api/data/:id', async (c) => {
 });
 
 /**
+ * Uses emailDistributionHandler to send an email via the Resend API
+ * 
  * Created by Drew on 10.4
  */
 app.post('/api/sendEmail', async (c) => {
-	return emailDistributionHandler.fetch(c.req.raw, c.env);
+	try {
+		// Parse the incoming request body
+		const { recipient, subject, message, sender } = await c.req.json();
+
+		// Input validation, sender is optional
+		if(!recipient || !subject || !message) {
+			return new Response("Missing one of the required fields: recipient, subject, or message", {
+				status: 400,
+			});
+		}
+
+		// Call the email handler
+		return await emailDistributionHandler.fetch(
+			c.req.raw,
+			c.env,
+			recipient || "agrogodev@gmail.com",
+			subject,
+			message,
+			sender || "onboarding@resend.dev" // TODO: Rework to an email on agrogo.org domain
+		);
+	} catch(error) {
+		console.error("Error in /api/sendEmail:", error);
+		return new Response(`Error sending email: ${(error as Error).message}`, { 
+			status: 500
+		});
+	}
 });
 
 export default app;
