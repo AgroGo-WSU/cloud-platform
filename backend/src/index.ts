@@ -100,10 +100,10 @@ app.post('/api/sendEmail', async (c) => {
 		return await emailDistributionHandler.fetch(
 			c.req.raw,
 			c.env,
-			recipient || "agrogodev@gmail.com",
+			recipient || "agrogodev@gmail.com", // TODO: only approved recipient, add others
 			subject,
 			message,
-			sender || "onboarding@resend.dev" // TODO: Rework to an email on agrogo.org domain
+			sender || "onboarding@resend.dev" // TODO: only approved sender, add others
 		);
 	} catch(error) {
 		console.error("Error in /api/sendEmail:", error);
