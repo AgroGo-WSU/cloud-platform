@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>API Test Page</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        input, button { font-size: 1em; margin: 5px; padding: 5px; }
+        pre { background-color: #f4f4f4; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+
+    <h1>Firebase Auth & API Tester</h1>
+
+    <div>
+        <button onclick="loginWithGoogle()">Sign in with Google</button>
+        <p id="authStatus">Status: Not logged in</p>
+    </div>
+
+    <hr>
+
+    <div>
+        <input type="text" id="zoneName" placeholder="New Zone Name">
+        <button onclick="createZone()">Create Zone</button>
+    </div>
+
+    <hr>
+
+    <div>
+        <input type="text" id="zoneId" placeholder="Zone ID">
+        <button onclick="postData()">Post Data</button>
+        <button onclick="getData()">Get Data</button>
+    </div>
+
+    <h3>ID Token (for manual testing):</h3>
+    <pre id="tokenDisplay">No token yet. Please log in.</pre>
+
+    <h3>API Response:</h3>
+    <pre id="response"></pre>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        // --- PASTE YOUR FIREBASE CONFIGURATION HERE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD5H47l8jzAJeve392CLEPPRVWFad40KJE",
+            authDomain: "agrogo-c4f0e.firebaseapp.com",
+            projectId: "agrogo-c4f0e",
+            storageBucket: "agrogo-c4f0e.firebasestorage.app",
+            messagingSenderId: "811174867409",
+            appId: "1:811174867409:web:165003e239e8e0cc11f0f0"
+};
+        // ---------------------------------------------
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        let idToken = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('authStatus').textContent = `Logged in as: ${user.email}`;
+                user.getIdToken().then((token) => {
+                    idToken = token;
+                    document.getElementById('tokenDisplay').textContent = token; // Display the token
+                });
+            } else {
+                idToken = null;
+                document.getElementById('authStatus').textContent = 'Status: Not logged in';
+                document.getElementById('tokenDisplay').textContent = 'No token yet. Please log in.';
+            }
+        });
+
+        window.loginWithGoogle = () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider)
+                .then(() => {
+                    alert('Google Sign-In Successful!');
+                })
+                .catch(err => {
+                    console.error("Google Sign-In Error:", err);
+                    document.getElementById('response').textContent = JSON.stringify(err, null, 2);
+                });
+        };
+
+        async function makeRequest(url, method, body) {
+            if (!idToken) {
+                alert('Please log in first.');
+                return;
+            }
+            const headers = {
+                'Authorization': `Bearer ${idToken}`,
+                'Content-Type': 'application/json'
+            };
+            const options = { method, headers };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const res = await fetch(url, options);
+                const data = await res.json();
+                document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+                if (data.zoneId) {
+                    document.getElementById('zoneId').value = data.zoneId;
+                }
+            } catch (error) {
+                document.getElementById('response').textContent = `Request failed: ${error.message}`;
+            }
+        }
+
+        window.createZone = () => {
+            const zoneName = document.getElementById('zoneName').value;
+            makeRequest('http://localhost:8787/api/zones', 'POST', { zoneName });
+        };
+
+        window.postData = () => {
+            const zoneId = document.getElementById('zoneId').value;
+            if (!zoneId) {
+                alert('Please create a zone or enter a Zone ID first.');
+                return;
+            }
+            const sensorData = { temperature: 21.0, humidity: 55, light: 800 };
+            makeRequest(`http://localhost:8787/api/data/${zoneId}`, 'POST', sensorData);
+        };
+
+        window.getData = () => {
+            const zoneId = document.getElementById('zoneId').value;
+            if (!zoneId) {
+                alert('Please create a zone or enter a Zone ID first.');
+                return;
+            }
+            makeRequest(`http://localhost:8787/api/data/${zoneId}`, 'GET');
+        };
+    </script>
+
+</body>
+</html>
