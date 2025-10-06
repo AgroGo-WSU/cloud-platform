@@ -7,6 +7,7 @@
 	"name": "backend",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-09-11",
+	"compatibility_flags": ["nodejs_compat"],
 	"migrations": [
 		{
 			"new_sqlite_classes": [
@@ -27,7 +28,7 @@
 		{
 			"binding": "DB",
 			"database_name": "agrogo-db",
-			//"database_id": ""// Add database's UUID here. DO NOT COMMIT!!!!! - Drew
+			"database_id": ""// Add database's UUID here. DO NOT COMMIT!!!!! - Drew
 		}
 	],
 	"observability": {

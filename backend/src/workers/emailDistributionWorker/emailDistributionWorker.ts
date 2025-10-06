@@ -1,7 +1,3 @@
-// Dotenv logic, allowing dynamically passed environment variables
-import 'dotenv/config';
-require('dotenv').config();
-
 export type ResendResponse = { id: string };
 
 /**
@@ -44,7 +40,7 @@ export const emailDistributionHandler = {
                 method: "POST",
                 headers: {
                     // NOTE: Need a .env file in the project directory
-                    "Authorization": `Bearer ${process.env.resend_token}`,
+                    "Authorization": `Bearer ${env.resend_token}`,
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
