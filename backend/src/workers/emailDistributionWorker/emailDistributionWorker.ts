@@ -1,3 +1,7 @@
+// Dotenv logic, allowing dynamically passed environment variables
+import 'dotenv/config';
+require('dotenv').config();
+
 export type ResendResponse = { id: string };
 
 /**
@@ -24,10 +28,7 @@ export type ResendResponse = { id: string };
  * @throws {Error} Throws if the Resend API request fails, the network call errors out,
  * or the response body cannot be parsed as JSON.
  *
- * @todo Move the Resend API key (`Authorization` header) into an environment variable (`env.RESEND_API_KEY`).
- * @todo Add schema validation for `recipient`, `subject`, `message`, and `sender` to ensure all required fields are valid.
  * @todo Log all email send attempts and failures for observability.
- * @todo Replace the placeholder sender with a verified domain-based address (e.g., `noreply@agrogo.org`).
  */
 export const emailDistributionHandler = {
     async fetch(
@@ -42,7 +43,8 @@ export const emailDistributionHandler = {
             const response = await fetch("https://api.resend.com/emails", {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer API_KEY_HERE`, // DO NOT COMMIT API
+                    // NOTE: Need a .env file in the project directory
+                    "Authorization": `Bearer ${process.env.resend_token}`,
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
