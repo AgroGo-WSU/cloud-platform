@@ -65,7 +65,6 @@ app.use('/api/*', async (c, next) => {
 	return next();
 });
 
-
 /**
  * Created by Nick
  * 

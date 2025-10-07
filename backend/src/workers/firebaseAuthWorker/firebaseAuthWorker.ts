@@ -15,6 +15,19 @@ interface FirebaseAccountsLookupResponse {
   }>;
 }
 
+/**
+ * Verifies a Firebase ID token by sending a lookup request to the Firebase Identity Toolkit API.
+ *
+ * This function checks whether the provided ID token corresponds to a valid Firebase user account.
+ * If valid, it returns a simplified `FirebaseUser` object containing key user details.
+ * If the token is invalid or the request fails, it returns `null`.
+ *
+ * @async
+ * @function verifyFirebaseToken
+ * @param {string} token - The Firebase ID token to verify.
+ * @param {string} apiKey - The Firebase project's Web API key used for authentication with the Identity Toolkit API.
+ * @returns {Promise<FirebaseUser | null>} A promise that resolves to a `FirebaseUser` object if verification succeeds, or `null` if invalid or not found.
+ */
 async function verifyFirebaseToken(token: string, apiKey: string): Promise<FirebaseUser | null> {
   const response = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
