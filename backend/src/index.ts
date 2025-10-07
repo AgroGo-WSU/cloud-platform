@@ -35,60 +35,16 @@ export interface Env {
 	DB: D1Database;
 }
 
-//completely overhualed by nick 10.4
-
-interface FirebaseUser {
-  uid: string;
-  email?: string;
-  name?: string;
-  picture?: string;
+declare module 'hono' {
+  interface ContextVariableMap {
+    userId: string;
+  }
 }
 
 const app = new Hono<{ Bindings: Env }>();
 
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
-
-interface FirebaseAccountsLookupResponse {
-  users: Array<{
-    localId: string;
-    email?: string;
-    displayName?: string;
-    photoUrl?: string;
-  }>;
-}
-
-async function verifyFirebaseToken(token: string, apiKey: string): Promise<FirebaseUser | null> {
-  const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken: token })
-    }
-  );
-
-  if (!response.ok) return null;
-
-  const data = (await response.json()) as FirebaseAccountsLookupResponse;
-
-  if (!data.users || data.users.length === 0) return null;
-
-  const user = data.users[0];
-
-  return {
-    uid: user.localId,
-    email: user.email,
-    name: user.displayName,
-    picture: user.photoUrl
-  };
-}
-
-declare module 'hono' {
-  interface ContextVariableMap {
-    userId: string;
-  }
-}
 
 app.use('/api/*', async (c, next) => {
 	const authHeader = c.req.header('Authorization');
@@ -117,8 +73,6 @@ app.use('/api/*', async (c, next) => {
  * Forwarding logic protected with firebase by Nick 10.1
  * updated by nick 10.4
  */
-
-
 app.post('/api/data/:zoneId', async (c) => {
 	const zoneId = c.req.param('zoneId');
 	const userId = c.get('userId');
@@ -135,6 +89,7 @@ app.post('/api/data/:zoneId', async (c) => {
 	const forwarded = new Request(original, { headers });
 	return stub.fetch(forwarded);
 });
+
 /**
  * Created by Drew on 9.21
  * updated by nick 10.4
