@@ -9,7 +9,7 @@
  */
 
 import { drizzle, DrizzleD1Database } from "drizzle-orm/d1";
-import * as schema from "../../schema";
+import * as schema from "./schema";
 import { or, eq, desc } from "drizzle-orm";
 
 /**
@@ -43,12 +43,13 @@ export function getDB(env: {DB: D1Database}): DB {
  * -method created nick 10.1
  */
 export async function createUser(db: DB, userId: string): Promise<void> {
-    const user = await db.query.users.findFirst({
-        where: eq(schema.users.id, userId),
+    const user = await db.query.user.findFirst({
+        where: eq(schema.user.id, userId),
     });
 
     if (!user) {
-        await db.insert(schema.users).values({ id: userId });
+        // TODO fix to match with new schema
+        await db.insert(schema.user).values({ id: userId });
     }
 }
 /**
@@ -67,7 +68,7 @@ export async function createZone(db: DB, userId: string, zoneName: string): Prom
         userId: userId,
         zoneName: zoneName,
     };
-    await db.insert(schema.zones).values(newZone);
+    await db.insert(schema.zone).values(newZone);
     return newZone.id;
 }
 

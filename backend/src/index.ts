@@ -25,7 +25,7 @@
 import { Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
-import { getDB, createZone } from './objects/streamingObject/databaseQueries';
+import { getDB, createZone } from './databaseQueries';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
 
 export interface Env {

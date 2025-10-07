@@ -17,7 +17,7 @@
  */
 
 import * as schema from "../../schema";
-import { DB, getDB, createUser, getRecentReadings } from "./databaseQueries";
+import { DB, getDB, createUser, getRecentReadings } from "../../databaseQueries";
 
 export interface Env {
 	DB: D1Database;
