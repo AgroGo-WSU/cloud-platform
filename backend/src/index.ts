@@ -27,6 +27,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { getDB, createZone } from './objects/streamingObject/databaseQueries';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
+import { emailDistributionHandler } from "./workers/emailDistributionWorker/emailDistributionWorker";
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
@@ -168,6 +169,40 @@ app.post('/api/zones', async (c) => {
 	const newZoneId = await createZone(db, userId, zoneName);
 
 	return c.json({ zoneId: newZoneId, zoneName: zoneName });
+});
+
+/**
+ * Uses emailDistributionHandler to send an email via the Resend API
+ * 
+ * Created by Drew on 10.4
+ */
+app.post('/api/sendEmail', async (c) => {
+	try {
+		// Parse the incoming request body
+		const { recipient, subject, message, sender } = await c.req.json();
+
+		// Input validation, sender is optional
+		if(!recipient || !subject || !message) {
+			return new Response("Missing one of the required fields: recipient, subject, or message", {
+				status: 400,
+			});
+		}
+
+		// Call the email handler
+		return await emailDistributionHandler.fetch(
+			c.req.raw,
+			c.env,
+			recipient,
+			subject,
+			message,
+			sender || "no-reply@agrogo.org" // Default sender
+		);
+	} catch(error) {
+		console.error("Error in /api/sendEmail:", error);
+		return new Response(`Error sending email: ${(error as Error).message}`, { 
+			status: 500
+		});
+	}
 });
 
 export default app;
