@@ -25,7 +25,7 @@
 import { Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
-import { getDB, createZone } from './objects/streamingObject/databaseQueries';
+import { getDB, createZone, createUser } from './handlers/databaseQueries';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
 import { emailDistributionHandler } from "./workers/emailDistributionWorker/emailDistributionWorker";
 
@@ -36,13 +36,10 @@ export interface Env {
 	DB: D1Database;
 }
 
-//completely overhualed by nick 10.4
-
-interface FirebaseUser {
-  uid: string;
-  email?: string;
-  name?: string;
-  picture?: string;
+declare module 'hono' {
+  interface ContextVariableMap {
+    userId: string;
+  }
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -50,46 +47,33 @@ const app = new Hono<{ Bindings: Env }>();
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
 
-interface FirebaseAccountsLookupResponse {
-  users: Array<{
-    localId: string;
-    email?: string;
-    displayName?: string;
-    photoUrl?: string;
-  }>;
-}
+/**
+ * Created by Drew on 10.8 - Creates a new user 
+ */
+app.post('/api/data/user', async (c) => {
+	try {
+		const body = await c.req.json();
+		console.log("Incoming body:", body);
 
-async function verifyFirebaseToken(token: string, apiKey: string): Promise<FirebaseUser | null> {
-  const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken: token })
-    }
-  );
+		const { id, email, firstName, lastName } = body;
 
-  if (!response.ok) return null;
+		if(!id || !email || !firstName || !lastName) {
+			console.log("Missing params:", { id, email, firstName, lastName });
+			return c.json(
+				{ error: "id, email, firstName, and lastName are required" },
+				400
+			);
+		}
 
-  const data = (await response.json()) as FirebaseAccountsLookupResponse;
-
-  if (!data.users || data.users.length === 0) return null;
-
-  const user = data.users[0];
-
-  return {
-    uid: user.localId,
-    email: user.email,
-    name: user.displayName,
-    picture: user.photoUrl
-  };
-}
-
-declare module 'hono' {
-  interface ContextVariableMap {
-    userId: string;
-  }
-}
+		console.log("Getting DB instance...");
+		const db = getDB({ DB: c.env.DB });
+		await createUser(db, id, email, firstName, lastName);
+		return c.json({ message: "User created successfully!" }, 201);
+	} catch(error) {
+		console.error("Error creating user:", error)
+		return c.json({ error: "Internal server error" }, 500)
+	}
+});
 
 app.use('/api/*', async (c, next) => {
 	const authHeader = c.req.header('Authorization');
@@ -109,6 +93,8 @@ app.use('/api/*', async (c, next) => {
 	c.set('userId', decoded.uid); 
 	return next();
 });
+// === All private API routes (require Firebase auth token) go below this line ===
+
 
 
 /**
@@ -118,8 +104,6 @@ app.use('/api/*', async (c, next) => {
  * Forwarding logic protected with firebase by Nick 10.1
  * updated by nick 10.4
  */
-
-
 app.post('/api/data/:zoneId', async (c) => {
 	const zoneId = c.req.param('zoneId');
 	const userId = c.get('userId');
@@ -136,6 +120,7 @@ app.post('/api/data/:zoneId', async (c) => {
 	const forwarded = new Request(original, { headers });
 	return stub.fetch(forwarded);
 });
+
 /**
  * Created by Drew on 9.21
  * updated by nick 10.4
@@ -156,6 +141,7 @@ app.get('/api/data/:zoneId', async (c) => {
 	});
 	return stub.fetch(forwarded);
 });
+
 //wrote route for zone creation nick 10.3
 app.post('/api/zones', async (c) => {
 	const userId = c.get('userId');
