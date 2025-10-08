@@ -46,7 +46,34 @@ const app = new Hono<{ Bindings: Env }>();
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
 
-// === All private API routes (require Firebase auth token) go below this use method ===
+/**
+ * Created by Drew on 10.8 - Creates a new user 
+ */
+app.post('/api/data/user', async (c) => {
+	try {
+		const body = await c.req.json();
+		console.log("Incoming body:", body);
+
+		const { id, email, firstName, lastName } = body;
+
+		if(!id || !email || !firstName || !lastName) {
+			console.log("Missing params:", { id, email, firstName, lastName });
+			return c.json(
+				{ error: "id, email, firstName, and lastName are required" },
+				400
+			);
+		}
+
+		console.log("Getting DB instance...");
+		const db = getDB({ DB: c.env.DB });
+		await createUser(db, id, email, firstName, lastName);
+		return c.json({ message: "User created successfully!" }, 201);
+	} catch(error) {
+		console.error("Error creating user:", error)
+		return c.json({ error: "Internal server error" }, 500)
+	}
+});
+
 app.use('/api/*', async (c, next) => {
 	const authHeader = c.req.header('Authorization');
 	if (!authHeader?.startsWith('Bearer ')) {
@@ -65,6 +92,9 @@ app.use('/api/*', async (c, next) => {
 	c.set('userId', decoded.uid); 
 	return next();
 });
+// === All private API routes (require Firebase auth token) go below this line ===
+
+
 
 /**
  * Created by Nick
