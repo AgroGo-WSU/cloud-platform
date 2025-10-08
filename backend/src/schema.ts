@@ -7,8 +7,14 @@
  * Each table should be declared here to ensure a single source of truth.
  *
  * Tables:
- * - deviceStream: Master list of all Raspberry Pi devices.
- * - deviceReadings: Stores raw JSON readings received from devices.
+ * - user: Master list of all authenticated users.
+ * - zone: User-defined zones for monitoring plants.
+ * - deviceReadings: Raw data log for all incoming JSON packets.
+ * - rasPi: Registry for Raspberry Pi devices.
+ * - alert: User-specific system alerts.
+ * - integrations: Third-party account integrations.
+ * - automations: User-defined automation rules.
+ * - plant: User-managed plants linked to zones.
  */
 
 import { sqliteTable, text, integer, blob } from "drizzle-orm/sqlite-core";
@@ -24,8 +30,8 @@ export const user = sqliteTable("user",{
     id: text("id").primaryKey(),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
     email: text("email").notNull(),
-    firstName: text("first_name"),
-    lastName: text("last_name")
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull()
 })
 
 /**
@@ -40,16 +46,16 @@ export const zone = sqliteTable("zone", {
     userId: text("user_id").notNull().references(() => user.id),
     // human readible name to be used with frontend ui.
     zoneName: text("zone_name").notNull(),
-    // this is jsut a way to keep track of registered device creations.
+    // this is just a way to keep track of registered device creations.
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
     description: text("description")
 });
 
 /**
  * Device Reading table
- * -This tables sole purpous is to log incoming json data from pi's
- * we are not parsing at this point only storing raw data and the
- * frontend will have to assign data
+ * - This table's sole purpose is to log incoming json data from pi's
+ *   we are not parsing at this point only storing raw data and the
+ *   frontend will have to assign data
  */
 export const deviceReadings = sqliteTable("deviceReadings",{
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()), // this is used to give tracking to the json packets
@@ -72,6 +78,12 @@ export const alert = sqliteTable("alert", {
     status: text("statis") // Values are 'handled', 'unhandled', 'error'
 });
 
+/**
+ * Integrations Table
+ * - Tracks connected third-party services for each user.
+ *   Used for API-based integrations.
+ *   Stores provider name, access tokens, and expiration metadata.
+ */
 export const integration = sqliteTable("integrations", {
     id: text("id").primaryKey().$default(() => crypto.randomUUID()),
     userId: text("user_id").notNull().references(() => user.id),
@@ -81,6 +93,12 @@ export const integration = sqliteTable("integrations", {
     expiresAt: integer("expires_at", { mode: "timestamp" }),
 });
 
+/**
+ * Automations Table
+ * - Placeholder for user-defined automation rules.
+ *   Each automation will link triggers, conditions, and actions
+ *   (to be implemented in future development).
+ */
 export const automation = sqliteTable("automations", {
     id: text("id").primaryKey().$default(() => crypto.randomUUID()),
 });

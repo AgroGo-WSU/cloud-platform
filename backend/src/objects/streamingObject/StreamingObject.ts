@@ -17,7 +17,7 @@
  */
 
 import * as schema from "../../schema";
-import { DB, getDB, createUser, getRecentReadings } from "../../databaseQueries";
+import { DB, getDB, createUser, getRecentReadings } from "../../handlers/databaseQueries";
 
 export interface Env {
 	DB: D1Database;
@@ -63,12 +63,18 @@ export class StreamingObject {
 		try {
 			const rawData = await request.json();
 			const userId = request.headers.get("x-user-id");
+			const userParams = {
+				id: request.headers.get("x-user-id"),
+				email: request.headers.get("x-user-email"),
+				firstName: request.headers.get("x-user-first-name"),
+				lastName: request.headers.get("x-user-last-name")
+			}
 			const zoneId = request.headers.get("x-zone-id");
 
 			if(!userId || !zoneId) {
 				return new Response("User ID and Zone ID are required in headers", { status: 400 })
 			}
-			await createUser(this.db, userId);
+			await createUser(this.db, userParams.id!, userParams.email!, userParams.firstName!, userParams.lastName!);
 
 			await this.db.insert(schema.deviceReadings).values({
 				id: crypto.randomUUID(),

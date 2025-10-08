@@ -25,7 +25,7 @@
 import { Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
-import { getDB, createZone } from './databaseQueries';
+import { getDB, createZone, createUser } from './handlers/databaseQueries';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
 
 export interface Env {
@@ -46,6 +46,7 @@ const app = new Hono<{ Bindings: Env }>();
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
 
+// === All private API routes (require Firebase auth token) go below this use method ===
 app.use('/api/*', async (c, next) => {
 	const authHeader = c.req.header('Authorization');
 	if (!authHeader?.startsWith('Bearer ')) {
@@ -109,6 +110,7 @@ app.get('/api/data/:zoneId', async (c) => {
 	});
 	return stub.fetch(forwarded);
 });
+
 //wrote route for zone creation nick 10.3
 app.post('/api/zones', async (c) => {
 	const userId = c.get('userId');

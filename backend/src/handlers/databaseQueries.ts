@@ -9,7 +9,7 @@
  */
 
 import { drizzle, DrizzleD1Database } from "drizzle-orm/d1";
-import * as schema from "./schema";
+import * as schema from "../schema";
 import { or, eq, desc } from "drizzle-orm";
 
 /**
@@ -40,18 +40,32 @@ export function getDB(env: {DB: D1Database}): DB {
  * 
  * @param db - The database client
  * @param userId - The device UUID or name to find/create
+ * @param email - The email tied to the user account
+ * @param firstName - The first name tied to the user account
+ * @param lastName - The last name tied to the user account
  * -method created nick 10.1
  */
-export async function createUser(db: DB, userId: string): Promise<void> {
+export async function createUser(
+    db: DB, 
+    userId: string, 
+    email: string,
+    firstName: string,
+    lastName: string
+): Promise<void> {
     const user = await db.query.user.findFirst({
         where: eq(schema.user.id, userId),
     });
 
-    if (!user) {
-        // TODO fix to match with new schema
-        await db.insert(schema.user).values({ id: userId });
-    }
+    if(user) return;
+
+    await db.insert(schema.user).values({ 
+        id: userId, 
+        email: email,
+        firstName: firstName,
+        lastName: lastName
+    });
 }
+
 /**
  * Creates a new zone for a given user.
  * This would be called from an endpoint that the user interacts with on the web app.
