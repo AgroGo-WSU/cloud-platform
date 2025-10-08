@@ -19,6 +19,7 @@
 
 import { sqliteTable, text, integer, blob } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+import { timestamp } from "drizzle-orm/gel-core";
 
 /**
  * Users Table
@@ -27,55 +28,109 @@ import { sql } from "drizzle-orm";
  * table added by nick 10.2
  */
 export const user = sqliteTable("user",{
-    id: text("id").primaryKey(),
-    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+    id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()),
+    createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
+    location: text("location").notNull(),
     email: text("email").notNull(),
     firstName: text("first_name").notNull(),
     lastName: text("last_name").notNull()
 })
 
+/** Sensor table
+ * this contains a table of uuids for every sensor, for every person
+ */
+export const sensors = sqliteTable("sensors",{
+    sensorId: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // uuid for each sensor
+    userId: text("user_id").notNull().references(() => user.id), // connecting to the user id
+    type: text("type").notNull(), // this is water pump, fan, temp/humidity sensor
+    zone: text("zone_name").notNull().references(() => zone.id), // to connect the raspi hardware to the zone the user is expecting (may need rewrite)
+})
+
+
 /**
  * Zone Table
  * -This table contains the masterlist for all of the Zones for users
- * each time a users adds a zone to there account to monitor a uuid is created
+ * each time a users adds a zone to their account to monitor a uuid is created
  * and it gets associated with the users firebase id
  * table added by nick 10.2
  */
 export const zone = sqliteTable("zone", {
     id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()),
     userId: text("user_id").notNull().references(() => user.id),
-    // human readible name to be used with frontend ui.
+    // human readable name to be used with frontend ui.
     zoneName: text("zone_name").notNull(),
     // this is just a way to keep track of registered device creations.
-    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+    createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
     description: text("description")
 });
 
 /**
- * Device Reading table
- * - This table's sole purpose is to log incoming json data from pi's
- *   we are not parsing at this point only storing raw data and the
- *   frontend will have to assign data
+ * Device Reading tables
+ * - These are the tables we need to read and write device data to and from the hardware
  */
-export const deviceReadings = sqliteTable("deviceReadings",{
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()), // this is used to give tracking to the json packets
-    zoneId: text("zone_id").notNull().references(() => zone.id), // linking zone ID back from json POST
-    jsonData: blob("json_data").notNull(),
-    receivedAt: text("received_at").default(sql`CURRENT_TIMESTAMP`).notNull(), // so we can tell when we've recived json data
+export const tempAndHumidity = sqliteTable("tempAndHumidity",{
+    userId: text("userID").references(() => user.id), // reference the userID to identify the account
+    type: text("type").notNull(), // either humidity or temperature
+    receivedAt: text("received_at").default("CURRENT_TIMESTAMP").notNull(), // timestamp for tracking
+    value: text("value").notNull(), // this is the humidity percentage or temperature value
 });
+
+export const pings = sqliteTable("pings",{
+    userId: text("userID").references(() => user.id), // reference the userID to identify the account
+    sensorID: text("sensorID").references(() => sensors.sensorId), // make sure it's the right sensor
+    confirmed: text("confirmed").notNull(), // device still connected or not
+    time: text("confirmed_at").default("CURRENT_TIMESTAMP").notNull(), // time of confirmation
+});
+
+export const waterSchedule = sqliteTable("waterSchedule",{
+    id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // to id the instance 
+    userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are conneccted with user account, but leaving it here for now)
+    sensorID: text("sensorID").references(() => sensors.sensorId), // make sure it's the right sensor
+    time: text("scheduled_time").notNull(), // scheduled time
+});
+
+export const fanSchedule = sqliteTable("fanSchedule",{
+    id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // to id the instance 
+    userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are conneccted with user account, but leaving it here for now)
+    sensorID: text("sensorID").references(() => sensors.sensorId), // make sure it's the right sensor
+    timeOn: text("scheduled_time_on").notNull(), // scheduled time on
+    timeOff: text("scheduled_time_off").notNull(), // scheduled time off
+});
+
+export const waterLog = sqliteTable("waterLog",{ // this table is for confirming that these events happened
+    id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // to id this confirmation instance 
+    schedule_instance: text("schedule_instance").references(() => waterSchedule.id), // this is the instance of the scheduled time from the schedule table
+    userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant, but leaving it here for now)
+    timeOnConfirm: text("scheduled_time_on_confirm").notNull(), // scheduled water time happened, yes or no
+    timeConfirmed: text("confirmed_at").default("CURRENT_TIMESTAMP").notNull(), // time of confirmation
+});
+
+export const fanLog = sqliteTable("fanLog",{ // this table is for confirming that these events happened
+    id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // to id this confirmation instance 
+    schedule_instance: text("schedule_instance").references(() => fanSchedule.id), // this is the instance of the scheduled time from the schedule table
+    userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant, but leaving it here for now)
+    timeOnConfirm: text("scheduled_time_on_confirm").notNull(), // scheduled time on happened, yes or no
+    timeOff: text("scheduled_time_off_confirm").notNull(), // scheduled time off happened, yes or no
+    timeConfirmed: text("confirmed_at").default("CURRENT_TIMESTAMP").notNull(), // time of confirmation
+});
+
+
+/** Connection health for Raspi */
 
 export const rasPi = sqliteTable("rasPi", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    receivedAt: text("received_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+    receivedAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
     status: text("status").notNull().default("unpaired"),  // Values are 'unpaired', 'offline', 'online', 'error'
 });
+
+/** altert table */
 
 export const alert = sqliteTable("alert", {
     id: text("id").primaryKey().$default(() => crypto.randomUUID()),
     userId: text("user_id").notNull().references(() => user.id),
     message: text("message").notNull(),
     severity: text("severity"), // Values are  'low', 'medium', 'high'
-    status: text("statis") // Values are 'handled', 'unhandled', 'error'
+    status: text("status") // Values are 'handled', 'unhandled', 'error'
 });
 
 /**
@@ -93,16 +148,8 @@ export const integration = sqliteTable("integrations", {
     expiresAt: integer("expires_at", { mode: "timestamp" }),
 });
 
-/**
- * Automations Table
- * - Placeholder for user-defined automation rules.
- *   Each automation will link triggers, conditions, and actions
- *   (to be implemented in future development).
- */
-export const automation = sqliteTable("automations", {
-    id: text("id").primaryKey().$default(() => crypto.randomUUID()),
-});
-
+/** I think this is the start of the inventory table 
+*/
 export const plant = sqliteTable("plant", {
     id: text("id").primaryKey().$default(() => crypto.randomUUID()),
     userId: text("user_id").notNull().references(() => user.id),
