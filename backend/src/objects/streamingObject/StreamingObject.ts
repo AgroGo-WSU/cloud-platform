@@ -17,7 +17,7 @@
  */
 
 import * as schema from "../../schema";
-import { DB, getDB, createUser, getRecentReadings } from "../../handlers/databaseQueries";
+import { DB, getDB, createUser } from "../../handlers/databaseQueries";
 
 export interface Env {
 	DB: D1Database;
@@ -66,6 +66,7 @@ export class StreamingObject {
 			const userParams = {
 				id: request.headers.get("x-user-id"),
 				email: request.headers.get("x-user-email"),
+				location: request.headers.get("x-user-location"),
 				firstName: request.headers.get("x-user-first-name"),
 				lastName: request.headers.get("x-user-last-name")
 			}
@@ -74,14 +75,14 @@ export class StreamingObject {
 			if(!userId || !zoneId) {
 				return new Response("User ID and Zone ID are required in headers", { status: 400 })
 			}
-			await createUser(this.db, userParams.id!, userParams.email!, userParams.firstName!, userParams.lastName!);
+			await createUser(this.db, userParams.id!, userParams.email!, userParams.location!, userParams.firstName!, userParams.lastName!);
 
-			await this.db.insert(schema.deviceReadings).values({
-				id: crypto.randomUUID(),
-				zoneId: zoneId,
-				jsonData: JSON.stringify(rawData),
-				receivedAt: new Date().toISOString(),
-			});
+			// await this.db.insert(schema.deviceReadings).values({
+			// 	id: crypto.randomUUID(),
+			// 	zoneId: zoneId,
+			// 	jsonData: JSON.stringify(rawData),
+			// 	receivedAt: new Date().toISOString(),
+			// });
 			return new Response ("Data saved successfully", { 
 				status: 200});
 
@@ -116,7 +117,7 @@ export class StreamingObject {
 			if (!zoneId) {
 				return new Response("Zone ID is required in headers", { status: 400 });
 			}
-			const readings = await getRecentReadings(this.db, zoneId, 10);
+			const readings = {}
 			return new Response(JSON.stringify(readings), {
 				headers: {"Content-Type": "application/json"},
 				status: 200

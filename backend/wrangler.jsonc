@@ -9,7 +9,7 @@
 	"compatibility_date": "2025-09-11",
 	"vars": {
 		"FIREBASE_PROJECT_ID": "agrogo-c4f0e",
-		 "FIREBASE_API_KEY": "AIzaSyD5H47l8jzAJeve392CLEPPRVWFad40KJE"
+		"FIREBASE_API_KEY": "AIzaSyD5H47l8jzAJeve392CLEPPRVWFad40KJE"
 	},
 	"migrations": [
 		{

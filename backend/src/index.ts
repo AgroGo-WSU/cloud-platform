@@ -25,8 +25,9 @@
 import { Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
-import { getDB, createZone, createUser } from './handlers/databaseQueries';
+import { getDB, createZone, insertTableEntry, returnTableEntries } from './handlers/databaseQueries';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
+import * as schema from './schema';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
@@ -46,7 +47,6 @@ const app = new Hono<{ Bindings: Env }>();
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
 
-// === All private API routes (require Firebase auth token) go below this use method ===
 app.use('/api/*', async (c, next) => {
 	const authHeader = c.req.header('Authorization');
 	if (!authHeader?.startsWith('Bearer ')) {
@@ -64,6 +64,64 @@ app.use('/api/*', async (c, next) => {
 
 	c.set('userId', decoded.uid); 
 	return next();
+});
+
+// === All private API routes (require Firebase auth token) go below this line ===
+
+/**
+ * 10.8 Created by Drew
+ * 
+ * Inserts a row into the alert table
+ */
+app.post('/api/data/alert', async (c) => {
+	try {
+		const db = getDB({ DB: c.env.DB });
+		const body = await c.req.json();
+
+		const entry = {
+			id: body.id,
+			userId: body.user_id,
+			message: body.message,
+			severity: body.severity,
+			status: body.status
+		};
+
+		await insertTableEntry(db, schema.alert, entry);
+		return c.json({ success: true });
+	} catch(error) {
+		console.error(error);
+		return c.json({ error: 'Failed to insert entry.' }, 500);
+	}
+});
+
+/**
+ * 10.8 Created by Drew
+ * 
+ * returns rows from the alert table
+ */
+app.get('api/data/alert', async (c) => {
+	try {
+		const db = getDB({ DB: c.env.DB });
+
+		const url = new URL(c.req.url);
+		const queryParams = Object.fromEntries(url.searchParams.entries());
+
+		const limit = queryParams.limit ? parseInt(queryParams.limit) : 1;
+		delete queryParams.limit;
+
+		const condition: Record<string, any> = {};
+
+		for(const [key, value] of Object.entries(queryParams)) {
+			condition[key] = value;
+		}
+
+		const entries = await returnTableEntries(db, schema.alert, condition, limit);
+
+		return c.json({ success: true, data: entries }, 200);
+	} catch(error) {
+		console.error(error);
+		return c.json({ error: 'Failed to retrieve entry' }, 500);
+	}
 });
 
 /**

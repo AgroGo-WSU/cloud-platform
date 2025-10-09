@@ -1,4 +1,4 @@
-//completely overhualed by nick 10.4
+//completely overhauled by nick 10.4
 interface FirebaseUser {
   uid: string;
   email?: string;

@@ -17,9 +17,7 @@
  * - plant: User-managed plants linked to zones.
  */
 
-import { sqliteTable, text, integer, blob } from "drizzle-orm/sqlite-core";
-import { sql } from "drizzle-orm";
-import { timestamp } from "drizzle-orm/gel-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 /**
  * Users Table
@@ -28,15 +26,17 @@ import { timestamp } from "drizzle-orm/gel-core";
  * table added by nick 10.2
  */
 export const user = sqliteTable("user",{
+    // TODO: use firebase UID
     id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()),
     createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
     location: text("location").notNull(),
     email: text("email").notNull(),
     firstName: text("first_name").notNull(),
     lastName: text("last_name").notNull()
-})
+});
 
-/** Sensor table
+/** 
+ * Sensor table
  * this contains a table of uuids for every sensor, for every person
  */
 export const sensors = sqliteTable("sensors",{
@@ -44,8 +44,7 @@ export const sensors = sqliteTable("sensors",{
     userId: text("user_id").notNull().references(() => user.id), // connecting to the user id
     type: text("type").notNull(), // this is water pump, fan, temp/humidity sensor
     zone: text("zone_name").notNull().references(() => zone.id), // to connect the raspi hardware to the zone the user is expecting (may need rewrite)
-})
-
+});
 
 /**
  * Zone Table
@@ -84,14 +83,14 @@ export const pings = sqliteTable("pings",{
 
 export const waterSchedule = sqliteTable("waterSchedule",{
     id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // to id the instance 
-    userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are conneccted with user account, but leaving it here for now)
+    userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are connected with user account, but leaving it here for now)
     sensorID: text("sensorID").references(() => sensors.sensorId), // make sure it's the right sensor
     time: text("scheduled_time").notNull(), // scheduled time
 });
 
 export const fanSchedule = sqliteTable("fanSchedule",{
     id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // to id the instance 
-    userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are conneccted with user account, but leaving it here for now)
+    userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are connected with user account, but leaving it here for now)
     sensorID: text("sensorID").references(() => sensors.sensorId), // make sure it's the right sensor
     timeOn: text("scheduled_time_on").notNull(), // scheduled time on
     timeOff: text("scheduled_time_off").notNull(), // scheduled time off
@@ -114,17 +113,14 @@ export const fanLog = sqliteTable("fanLog",{ // this table is for confirming tha
     timeConfirmed: text("confirmed_at").default("CURRENT_TIMESTAMP").notNull(), // time of confirmation
 });
 
-
 /** Connection health for Raspi */
-
 export const rasPi = sqliteTable("rasPi", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     receivedAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
     status: text("status").notNull().default("unpaired"),  // Values are 'unpaired', 'offline', 'online', 'error'
 });
 
-/** altert table */
-
+/** alert table */
 export const alert = sqliteTable("alert", {
     id: text("id").primaryKey().$default(() => crypto.randomUUID()),
     userId: text("user_id").notNull().references(() => user.id),

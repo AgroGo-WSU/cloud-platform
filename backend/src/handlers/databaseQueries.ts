@@ -10,7 +10,7 @@
 
 import { drizzle, DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "../schema";
-import { or, eq, desc } from "drizzle-orm";
+import { eq, Table, InferInsertModel, InferSelectModel, and } from "drizzle-orm";
 
 /**
  * Strongly typed Drizzle database instance
@@ -34,6 +34,43 @@ export function getDB(env: {DB: D1Database}): DB {
     return drizzle(env.DB, { schema })
 }
 
+export async function insertTableEntry<T extends Table>(
+    db: DB,
+    table: T,
+    entry: InferInsertModel<T> // Type checks that the entry matches the format of its table
+): Promise<void> {
+    await db.insert(table).values(entry);
+}
+
+export async function returnTableEntries<T extends Table>(
+    db: DB,
+    table: T,
+    condition: Partial<InferSelectModel<T>>, // Optional filtering
+    amount: number
+): Promise<InferSelectModel<T>[]> {
+    let whereClause;
+
+    // Only build a WHERE clause if conditions were passed
+    if(condition && Object.keys(condition).length > 0) {
+        // Pull all clauses from the user's condition entry
+        const clauses = Object.entries(condition).map(
+            ([key, value]) => eq((table as any)[key], value)
+        );
+        // If the user put in > 1 condition, spread them to whereClause
+        // If the user put in 1 condition, use that one
+        // No need to check if no conditions were passed, handled in if block above
+        whereClause = clauses.length > 1 ? and(...clauses) : clauses[0];
+    }
+
+    // Build/return results
+    const result = await db
+        .select()
+        .from(table)
+        .where(whereClause)
+        .limit(amount);
+    return result;
+}
+
 /**
  * Creates a new user in the database if they do not already exist.
  * This should be called after a user successfully authenticates with Firebase.
@@ -47,7 +84,8 @@ export function getDB(env: {DB: D1Database}): DB {
  */
 export async function createUser(
     db: DB, 
-    userId: string, 
+    userId: string,
+    location: string, 
     email: string,
     firstName: string,
     lastName: string
@@ -61,6 +99,7 @@ export async function createUser(
     await db.insert(schema.user).values({ 
         id: userId, 
         email: email,
+        location: location,
         firstName: firstName,
         lastName: lastName
     });
@@ -98,11 +137,11 @@ export async function createZone(db: DB, userId: string, zoneName: string): Prom
  * Drew 9.22 Created method
  * updated 10.2 -nick
  */
-export async function getRecentReadings(db: DB, zoneId: string, limit = 10) {
-    return db
-        .select()
-        .from(schema.deviceReadings)
-        .where(eq(schema.deviceReadings.zoneId, zoneId))
-        .orderBy(desc(schema.deviceReadings.receivedAt))
-        .limit(limit)
-}
+// export async function getRecentReadings(db: DB, zoneId: string, limit = 10) {
+//     return db
+//         .select()
+//         .from(schema.deviceReadings)
+//         .where(eq(schema.deviceReadings.zoneId, zoneId))
+//         .orderBy(desc(schema.deviceReadings.receivedAt))
+//         .limit(limit)
+// }

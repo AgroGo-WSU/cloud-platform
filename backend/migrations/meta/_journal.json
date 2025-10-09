@@ -8,6 +8,13 @@
       "when": 1759548989903,
       "tag": "0000_legal_lady_ursula",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1759964985230,
+      "tag": "0001_create_all_tables",
+      "breakpoints": true
     }
   ]
 }
