@@ -39,10 +39,11 @@ export const user = sqliteTable("user",{
  * Sensor table
  * this contains a table of uuids for every sensor, for every person
  */
+export const sensorsTypeEnum = ['water pump', 'fan', 'temp/humidity'] as const
 export const sensors = sqliteTable("sensors",{
     sensorId: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // uuid for each sensor
     userId: text("user_id").notNull().references(() => user.id), // connecting to the user id
-    type: text("type").notNull(), // this is water pump, fan, temp/humidity sensor
+    type: text("type", { enum: sensorsTypeEnum }).notNull(),
     zone: text("zone_name").notNull().references(() => zone.id), // to connect the raspi hardware to the zone the user is expecting (may need rewrite)
 });
 
@@ -113,20 +114,23 @@ export const fanLog = sqliteTable("fanLog",{ // this table is for confirming tha
     timeConfirmed: text("confirmed_at").default("CURRENT_TIMESTAMP").notNull(), // time of confirmation
 });
 
-/** Connection health for Raspi */
+/** Connection health for RasPi */
+export const rasPiStatusEnum = ['unpaired', 'offline', 'online', 'error'] as const;
 export const rasPi = sqliteTable("rasPi", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     receivedAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
-    status: text("status").notNull().default("unpaired"),  // Values are 'unpaired', 'offline', 'online', 'error'
+    status: text("status", { enum: rasPiStatusEnum }).notNull().default("unpaired"),
 });
 
 /** alert table */
+export const alertSeverityEnum = ['low', 'medium', 'high', 'error'] as const;
+export const alertStatusEnum = ["handled", "unhandled", "error"] as const;
 export const alert = sqliteTable("alert", {
     id: text("id").primaryKey().$default(() => crypto.randomUUID()),
     userId: text("user_id").notNull().references(() => user.id),
     message: text("message").notNull(),
-    severity: text("severity"), // Values are  'low', 'medium', 'high'
-    status: text("status") // Values are 'handled', 'unhandled', 'error'
+    severity: text("severity", { enum: alertSeverityEnum }).notNull(),
+    status: text("status", { enum: alertStatusEnum }).notNull()
 });
 
 /**
@@ -144,7 +148,8 @@ export const integration = sqliteTable("integrations", {
     expiresAt: integer("expires_at", { mode: "timestamp" }),
 });
 
-/** I think this is the start of the inventory table 
+/** 
+ * Plant inventory table
 */
 export const plant = sqliteTable("plant", {
     id: text("id").primaryKey().$default(() => crypto.randomUUID()),

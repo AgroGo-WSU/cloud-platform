@@ -27,6 +27,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { getDB, createZone, insertTableEntry, returnTableEntries } from './handlers/databaseQueries';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
+import { verifyFirebaseToken } from './handlers/firebaseAuth';
 import * as schema from './schema';
 
 export interface Env {
@@ -46,6 +47,7 @@ const app = new Hono<{ Bindings: Env }>();
 
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
+
 
 app.use('/api/*', async (c, next) => {
 	const authHeader = c.req.header('Authorization');
@@ -69,6 +71,58 @@ app.use('/api/*', async (c, next) => {
 // === All private API routes (require Firebase auth token) go below this line ===
 
 /**
+ * 10.13 - Created by Drew
+ * 
+ * TODO come back after finishing Zones
+ */
+app.post('/api/data/sensors', async (c) => {
+	try {
+		const db = getDB({ DB: c.env.DB });
+		const body = await c.req.json();
+
+		const entry = {
+			userId: body.userId,
+			type: body.type,
+			zone: body.zone
+		};
+
+		await insertTableEntry(db, schema.sensors, entry);
+		return c.json({ success: true });
+	} catch(error) {
+		console.error(error);
+		return c.json({ error: 'Failed to insert entry.' }, 500);
+	}
+});
+
+/**
+ * 10.13 - Created by Drew
+ */
+app.get('/api/data/sensors', async (c) => {
+	try {
+		const db = getDB({ DB: c.env.DB });
+
+		const url = new URL(c.req.url);
+		const queryParams = Object.fromEntries(url.searchParams.entries());
+
+		const limit = queryParams.limit ? parseInt(queryParams.limit) : 1;
+		delete queryParams.limit;
+
+		const condition: Record<string, any> = {};
+
+		for(const [key, value] of Object.entries(queryParams)) {
+			condition[key] = value;
+		}
+
+		const entries = await returnTableEntries(db, schema.alert, condition, limit);
+
+		return c.json({ success: true, data: entries }, 200);
+	} catch(error) {
+		console.error(error);
+		return c.json({ error: 'Failed to retrieve entry' }, 500);
+	}
+});
+
+/**
  * 10.8 Created by Drew
  * 
  * Inserts a row into the alert table
@@ -79,12 +133,13 @@ app.post('/api/data/alert', async (c) => {
 		const body = await c.req.json();
 
 		const entry = {
-			id: body.id,
 			userId: body.user_id,
 			message: body.message,
 			severity: body.severity,
 			status: body.status
 		};
+
+		if(entry.message)
 
 		await insertTableEntry(db, schema.alert, entry);
 		return c.json({ success: true });
