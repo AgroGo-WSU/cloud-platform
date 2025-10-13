@@ -28,6 +28,7 @@ import { cors } from 'hono/cors';
 import { getDB, createZone, insertTableEntry, returnTableEntries } from './handlers/databaseQueries';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
 import { verifyFirebaseToken } from './handlers/firebaseAuth';
+import { handleGetTableEntries } from './handlers/getTableEntries';
 import * as schema from './schema';
 
 export interface Env {
@@ -72,6 +73,29 @@ app.use('/api/*', async (c, next) => {
 
 /**
  * 10.13 - Created by Drew
+ */
+app.post('/api/data/user', async (c) => {
+	try {
+		const db = getDB({ DB: c.env.DB });
+		const body = await c.req.json();
+
+		const entry = {
+			location: body.location,
+			email: body.email,
+			firstName: body.firstName,
+			lastName: body.lastName
+		};
+
+		await insertTableEntry(db, schema.user, entry);
+		return c.json({ success: true });
+	} catch(error) {
+		console.error(error);
+		return c.json({ error: 'Failed to insert entry.' }, 500);
+	}
+});
+
+/**
+ * 10.13 - Created by Drew
  * 
  * TODO come back after finishing Zones
  */
@@ -91,34 +115,6 @@ app.post('/api/data/sensors', async (c) => {
 	} catch(error) {
 		console.error(error);
 		return c.json({ error: 'Failed to insert entry.' }, 500);
-	}
-});
-
-/**
- * 10.13 - Created by Drew
- */
-app.get('/api/data/sensors', async (c) => {
-	try {
-		const db = getDB({ DB: c.env.DB });
-
-		const url = new URL(c.req.url);
-		const queryParams = Object.fromEntries(url.searchParams.entries());
-
-		const limit = queryParams.limit ? parseInt(queryParams.limit) : 1;
-		delete queryParams.limit;
-
-		const condition: Record<string, any> = {};
-
-		for(const [key, value] of Object.entries(queryParams)) {
-			condition[key] = value;
-		}
-
-		const entries = await returnTableEntries(db, schema.alert, condition, limit);
-
-		return c.json({ success: true, data: entries }, 200);
-	} catch(error) {
-		console.error(error);
-		return c.json({ error: 'Failed to retrieve entry' }, 500);
 	}
 });
 
@@ -150,33 +146,19 @@ app.post('/api/data/alert', async (c) => {
 });
 
 /**
- * 10.8 Created by Drew
+ * 10.8 Route created by Drew
  * 
- * returns rows from the alert table
+ * Returns entries in a table based on params passed by the request
  */
-app.get('api/data/alert', async (c) => {
-	try {
-		const db = getDB({ DB: c.env.DB });
+app.get('api/data/:table', async (c) => {
+	// Find the table's name that was passed
+	const tableName = c.req.param('table');
 
-		const url = new URL(c.req.url);
-		const queryParams = Object.fromEntries(url.searchParams.entries());
+	// Check if the table exists in the schema
+	const table = (schema as Record<string, any>)[tableName];
+	if(!table) return c.json({ error: `Table ${tableName} not found`}, 404);
 
-		const limit = queryParams.limit ? parseInt(queryParams.limit) : 1;
-		delete queryParams.limit;
-
-		const condition: Record<string, any> = {};
-
-		for(const [key, value] of Object.entries(queryParams)) {
-			condition[key] = value;
-		}
-
-		const entries = await returnTableEntries(db, schema.alert, condition, limit);
-
-		return c.json({ success: true, data: entries }, 200);
-	} catch(error) {
-		console.error(error);
-		return c.json({ error: 'Failed to retrieve entry' }, 500);
-	}
+	return handleGetTableEntries(table, c);
 });
 
 /**
