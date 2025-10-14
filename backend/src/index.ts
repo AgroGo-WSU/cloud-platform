@@ -1,25 +1,52 @@
 /**
  * index.ts
  *
- * Entry point for defining API routes in the Hono application.
- * 
- * This file wires incoming HTTP requests to the correct Durable Object
- * instance (`StreamingObject`), based on either a device UUID or a
- * human-readable device name provided in the request URL.
+ * HTTP routing entrypoint for the AgroGo backend (Hono + Cloudflare Workers).
  *
- * - POST /api/data/:id Forwards incoming sensor data payloads to the 
- *   corresponding Durable Object for processing and database insertion.
- * 
- * - GET /api/data/:id Retrieves the latest sensor readings for a device 
- *   by delegating the query to the corresponding Durable Object.
- * 
- * All requests are forwarded with the original device identifier attached
- * as the `x-device-key` header, allowing the Durable Object to correctly
- * resolve and persist/query data.
+ * Responsibilities
+ * - Configure global middleware:
+ *   - CORS for all routes.
+ *   - Firebase auth verification for all routes under /api/* (expects `Authorization: Bearer <token>`).
+ * - Wire small, focused route handlers that delegate business logic to handler modules:
+ *   - POST routes that insert rows into specific tables use `handleAddTableEntry`.
+ *   - A generic GET route that returns rows from any table uses `handleGetTableEntries`.
+ *   - Zone creation endpoint uses `createZone` from databaseQueries.
+ * - Forward device-level API requests to a per-zone Durable Object (StreamingObject):
+ *   - POST /api/data/:zoneId forwards sensor payloads to the Durable Object instance for that zone.
+ *   - GET /api/data/:zoneId forwards reads to the Durable Object instance for that zone.
  *
- * This file should remain focused on routing logic. Device handling logic,
- * business methods, and database interactions should live in their own
- * dedicated modules for clarity and maintainability.
+ * Key files / modules used by this router
+ * - ./handlers/databaseQueries         : DB helpers (getDB, createZone, insert/return helpers)
+ * - ./handlers/addTableEntry           : handleAddTableEntry (inserts into a table)
+ * - ./handlers/getTableEntries         : handleGetTableEntries (query table rows with filters/limit)
+ * - ./handlers/firebaseAuth            : verifyFirebaseToken used by auth middleware
+ * - ./objects/streamingObject/StreamingObject : Durable Object class used to isolate device ingestion
+ * - ./schema                          : Drizzle table definitions used to look up tables by name
+ *
+ * Routes summary
+ * - POST /api/data/<table>        : Insert a row into a specific table (many table-specific routes wired).
+ * - GET  /api/data/:table         : Generic tabular endpoint. Accepts query params as filters and `limit`.
+ * - POST /api/data/:zoneId        : Forward device POST payloads to the zone's Durable Object.
+ * - GET  /api/data/:zoneId        : Forward device GET requests to the zone's Durable Object.
+ * - POST /api/zones               : Create a new zone (uses createZone helper).
+ *
+ * Important notes / conventions
+ * - All /api/* routes require a valid Firebase Bearer token; middleware sets `userId` on context.
+ * - Route handlers should be small and delegate DB/logic to the handler modules (separation of concerns).
+ * - Table names passed to the generic GET endpoint are looked up from the exported `schema` object;
+ *   callers receive 404 if the requested table name is not found in the schema.
+ * - Handlers return JSON responses and log errors to the Worker console. Status codes follow:
+ *   - 200 / 201 for success, 400 for client errors, 401 for auth errors, 500 for server errors.
+ *
+ * Deployment / bindings
+ * - Expected environment bindings (Env):
+ *     STREAMING_OBJECT : Durable Object namespace
+ *     FIREBASE_PROJECT_ID
+ *     FIREBASE_API_KEY
+ *     DB               : D1Database
+ *
+ * Keep this file focused on routing only. Business logic, DB queries, and Durable Object internals
+ * belong in their respective modules to keep routes concise and testable.
  */
 
 import { Hono } from 'hono';
@@ -185,7 +212,7 @@ app.post('/api/data/rasPi', async (c) => {
 });
 
 /**
- * 10.8 Created by Drew
+ * 10.13 Created by Drew
  * 
  * Inserts a row into the alert table
  */
@@ -211,9 +238,7 @@ app.post('/api/data/integration', async (c) => {
 });
 
 /**
- * 10.8 Created by Drew
- * 
- * Inserts a row into the alert table
+ * 10.13 Created by Drew
  */
 app.post('/api/data/plantInventory', async (c) => {
 	const body = await c.req.json();
@@ -224,7 +249,7 @@ app.post('/api/data/plantInventory', async (c) => {
 });
 
 /**
- * 10.8 Route created by Drew
+ * 10.13 Route created by Drew
  * 
  * Returns entries in a table based on params passed by the request
  */
