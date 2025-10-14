@@ -16,7 +16,6 @@
  * ensuring reliable ingestion and retrieval of IoT data on a per-device basis.
  */
 
-import * as schema from "../../schema";
 import { DB, getDB, createUser } from "../../handlers/databaseQueries";
 
 export interface Env {

@@ -1,9 +1,18 @@
-import { Table } from "drizzle-orm";
 import { getDB, returnTableEntries } from "./databaseQueries";
 import { Context } from "hono";
 import { SQLiteTable } from "drizzle-orm/sqlite-core";
 
-
+/**
+ * Retrieves entries from the specified database table based on URL query parameters.
+ *
+ * Extracts query parameters from the request URL to build filter conditions
+ * and applies an optional `limit` parameter (defaulting to 100). Returns
+ * the matching rows as a JSON response.
+ *
+ * @param {SQLiteTable} table - The Drizzle ORM table schema to query from.
+ * @param {Context} c - The Hono request context containing the environment and response helpers.
+ * @returns {Promise<Response>} A JSON response containing the retrieved entries or an error message.
+ */
 export async function handleGetTableEntries (
     table: SQLiteTable, 
     c: Context

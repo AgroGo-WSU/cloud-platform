@@ -17,6 +17,7 @@
  * - plant: User-managed plants linked to zones.
  */
 
+import { sql } from "drizzle-orm";
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 /**
@@ -28,7 +29,7 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 export const user = sqliteTable("user",{
     // TODO: use firebase UID
     id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()),
-    createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
     location: text("location").notNull(),
     email: text("email").notNull(),
     firstName: text("first_name").notNull(),
@@ -60,7 +61,7 @@ export const zone = sqliteTable("zone", {
     // human readable name to be used with frontend ui.
     zoneName: text("zone_name").notNull(),
     // this is just a way to keep track of registered device creations.
-    createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
     description: text("description")
 });
 
@@ -68,31 +69,33 @@ export const zone = sqliteTable("zone", {
  * Device Reading tables
  * - These are the tables we need to read and write device data to and from the hardware
  */
+export const tempAndHumidityTypeEnum = ['humidity', 'temperature'] as const;
 export const tempAndHumidity = sqliteTable("tempAndHumidity",{
     userId: text("userID").references(() => user.id), // reference the userID to identify the account
-    type: text("type").notNull(), // either humidity or temperature
-    receivedAt: text("received_at").default("CURRENT_TIMESTAMP").notNull(), // timestamp for tracking
+    type: text("type", { enum: tempAndHumidityTypeEnum }).notNull(),
+    receivedAt: text("received_at").default(sql`CURRENT_TIMESTAMP`).notNull(), // timestamp for tracking
     value: text("value").notNull(), // this is the humidity percentage or temperature value
 });
 
+export const pingsConfirmedEnum = ["yes", "no"] as const;
 export const pings = sqliteTable("pings",{
     userId: text("userID").references(() => user.id), // reference the userID to identify the account
-    sensorID: text("sensorID").references(() => sensors.sensorId), // make sure it's the right sensor
-    confirmed: text("confirmed").notNull(), // device still connected or not
-    time: text("confirmed_at").default("CURRENT_TIMESTAMP").notNull(), // time of confirmation
+    sensorId: text("sensorId").references(() => sensors.sensorId), // make sure it's the right sensor
+    confirmed: text("confirmed", { enum: pingsConfirmedEnum }).notNull(), // device still connected or not
+    time: text("confirmed_at").default(sql`CURRENT_TIMESTAMP`).notNull(), // time of confirmation
 });
 
 export const waterSchedule = sqliteTable("waterSchedule",{
     id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // to id the instance 
     userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are connected with user account, but leaving it here for now)
-    sensorID: text("sensorID").references(() => sensors.sensorId), // make sure it's the right sensor
+    sensorId: text("sensorId").references(() => sensors.sensorId), // make sure it's the right sensor
     time: text("scheduled_time").notNull(), // scheduled time
 });
 
 export const fanSchedule = sqliteTable("fanSchedule",{
     id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // to id the instance 
     userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are connected with user account, but leaving it here for now)
-    sensorID: text("sensorID").references(() => sensors.sensorId), // make sure it's the right sensor
+    sensorId: text("sensorId").references(() => sensors.sensorId), // make sure it's the right sensor
     timeOn: text("scheduled_time_on").notNull(), // scheduled time on
     timeOff: text("scheduled_time_off").notNull(), // scheduled time off
 });
@@ -102,7 +105,7 @@ export const waterLog = sqliteTable("waterLog",{ // this table is for confirming
     schedule_instance: text("schedule_instance").references(() => waterSchedule.id), // this is the instance of the scheduled time from the schedule table
     userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant, but leaving it here for now)
     timeOnConfirm: text("scheduled_time_on_confirm").notNull(), // scheduled water time happened, yes or no
-    timeConfirmed: text("confirmed_at").default("CURRENT_TIMESTAMP").notNull(), // time of confirmation
+    timeConfirmed: text("confirmed_at").default(sql`CURRENT_TIMESTAMP`).notNull(), // time of confirmation
 });
 
 export const fanLog = sqliteTable("fanLog",{ // this table is for confirming that these events happened
@@ -111,14 +114,14 @@ export const fanLog = sqliteTable("fanLog",{ // this table is for confirming tha
     userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant, but leaving it here for now)
     timeOnConfirm: text("scheduled_time_on_confirm").notNull(), // scheduled time on happened, yes or no
     timeOff: text("scheduled_time_off_confirm").notNull(), // scheduled time off happened, yes or no
-    timeConfirmed: text("confirmed_at").default("CURRENT_TIMESTAMP").notNull(), // time of confirmation
+    timeConfirmed: text("confirmed_at").default(sql`CURRENT_TIMESTAMP`).notNull(), // time of confirmation
 });
 
 /** Connection health for RasPi */
 export const rasPiStatusEnum = ['unpaired', 'offline', 'online', 'error'] as const;
 export const rasPi = sqliteTable("rasPi", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    receivedAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
+    receivedAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
     status: text("status", { enum: rasPiStatusEnum }).notNull().default("unpaired"),
 });
 
@@ -145,13 +148,13 @@ export const integration = sqliteTable("integrations", {
     provider: text("provider").notNull(),
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
-    expiresAt: integer("expires_at", { mode: "timestamp" }),
+    expiresAt: text("expires_at"),
 });
 
 /** 
  * Plant inventory table
 */
-export const plant = sqliteTable("plant", {
+export const plantInventory = sqliteTable("plantInventory", {
     id: text("id").primaryKey().$default(() => crypto.randomUUID()),
     userId: text("user_id").notNull().references(() => user.id),
     plantType: text("plant_type"),

@@ -25,11 +25,12 @@
 import { Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
-import { getDB, createZone, insertTableEntry, returnTableEntries } from './handlers/databaseQueries';
+import { getDB, createZone } from './handlers/databaseQueries';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
 import { verifyFirebaseToken } from './handlers/firebaseAuth';
 import { handleGetTableEntries } from './handlers/getTableEntries';
 import * as schema from './schema';
+import { handleAddTableEntry } from './handlers/addTableEntry';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
@@ -71,51 +72,116 @@ app.use('/api/*', async (c, next) => {
 
 // === All private API routes (require Firebase auth token) go below this line ===
 
+// === POST Routes for database tables === \\
+
 /**
  * 10.13 - Created by Drew
  */
-app.post('/api/data/user', async (c) => {
-	try {
-		const db = getDB({ DB: c.env.DB });
-		const body = await c.req.json();
-
-		const entry = {
-			location: body.location,
-			email: body.email,
-			firstName: body.firstName,
-			lastName: body.lastName
-		};
-
-		await insertTableEntry(db, schema.user, entry);
-		return c.json({ success: true });
-	} catch(error) {
-		console.error(error);
-		return c.json({ error: 'Failed to insert entry.' }, 500);
-	}
+app.post('api/data/user', async (c) => {
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.user, c,
+		{ location: body.location, email: body.email, firstName: body.firstName, lastName: body.lastName }
+	);
 });
 
 /**
  * 10.13 - Created by Drew
- * 
- * TODO come back after finishing Zones
  */
 app.post('/api/data/sensors', async (c) => {
-	try {
-		const db = getDB({ DB: c.env.DB });
-		const body = await c.req.json();
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.sensors, c,
+		{ userId: body.userId, type: body.type, zone: body.zone }
+	);
+});
 
-		const entry = {
-			userId: body.userId,
-			type: body.type,
-			zone: body.zone
-		};
+/**
+ * 10.13 - Created by Drew
+ */
+app.post('/api/data/zone', async (c) => {
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.zone, c,
+		{ userId: body.userId, zoneName: body.zoneName, description: body.description }
+	);
+});
 
-		await insertTableEntry(db, schema.sensors, entry);
-		return c.json({ success: true });
-	} catch(error) {
-		console.error(error);
-		return c.json({ error: 'Failed to insert entry.' }, 500);
-	}
+/**
+ * 10.13 - Created by Drew
+ */
+app.post('/api/data/tempAndHumidity', async (c) => {
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.tempAndHumidity, c,
+		{ userId: body.userId, type: body.type, value: body.value }
+	);
+});
+
+/**
+ * 10.13 - Created by Drew
+ */
+app.post('/api/data/pings', async (c) => {
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.pings, c,
+		{ userId: body.userId, sensorId: body.sensorId, confirmed: body.confirmed }
+	);
+});
+
+/**
+ * 10.13 - Created by Drew
+ */
+app.post('/api/data/waterSchedule', async (c) => {
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.waterSchedule, c,
+		{ userId: body.userId, sensorId: body.sensorId, time: body.time }
+	);
+});
+
+/**
+ * 10.13 - Created by Drew
+ */
+app.post('/api/data/fanSchedule', async (c) => {
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.fanSchedule, c,
+		{ userId: body.userId, sensorId: body.sensorId, timeOn: body.timeOn, timeOff: body.timeOff }
+	);
+});
+
+/**
+ * 10.13 - Created by Drew
+ */
+app.post('/api/data/waterLog', async (c) => {
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.waterLog, c,
+		{ userId: body.userId, schedule_instance: body.schedule_instance, timeOnConfirm: body.timeOnConfirm, timeOffConfirm: body.timeOffConfirm }
+	);
+});
+
+/**
+ * 10.13 - Created by Drew
+ */
+app.post('/api/data/fanLog', async (c) => {
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.fanLog, c,
+		{ userId: body.userId, schedule_instance: body.schedule_instance, timeOnConfirm: body.timeOnConfirm, timeOff: body.timeOff }
+	);
+});
+
+/**
+ * 10.13 - Created by Drew
+ */
+app.post('/api/data/rasPi', async (c) => {
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.rasPi, c,
+		{ status: body.status }
+	);
 });
 
 /**
@@ -124,25 +190,37 @@ app.post('/api/data/sensors', async (c) => {
  * Inserts a row into the alert table
  */
 app.post('/api/data/alert', async (c) => {
-	try {
-		const db = getDB({ DB: c.env.DB });
-		const body = await c.req.json();
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.rasPi, c,
+		{ userId: body.userId, message: body.message, severity: body.severity, status: body.status }
+	);
+});
 
-		const entry = {
-			userId: body.user_id,
-			message: body.message,
-			severity: body.severity,
-			status: body.status
-		};
+/**
+ * 10.8 Created by Drew
+ * 
+ * Inserts a row into the alert table
+ */
+app.post('/api/data/integration', async (c) => {
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.integration, c,
+		{ userId: body.userId, provider: body.provider, accessToken: body.accessToken, refreshToken: body.refreshToken, expiresAt: body.expiresAt }
+	);
+});
 
-		if(entry.message)
-
-		await insertTableEntry(db, schema.alert, entry);
-		return c.json({ success: true });
-	} catch(error) {
-		console.error(error);
-		return c.json({ error: 'Failed to insert entry.' }, 500);
-	}
+/**
+ * 10.8 Created by Drew
+ * 
+ * Inserts a row into the alert table
+ */
+app.post('/api/data/plantInventory', async (c) => {
+	const body = await c.req.json();
+	return handleAddTableEntry(
+		schema.plantInventory, c,
+		{ userId: body.userId, plantType: body.plantType, plantName: body.plantName, zoneId: body.zoneId }
+	);
 });
 
 /**
