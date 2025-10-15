@@ -11,24 +11,17 @@
  *   - POST routes that insert rows into specific tables use `handleAddTableEntry`.
  *   - A generic GET route that returns rows from any table uses `handleGetTableEntries`.
  *   - Zone creation endpoint uses `createZone` from databaseQueries.
- * - Forward device-level API requests to a per-zone Durable Object (StreamingObject):
- *   - POST /api/data/:zoneId forwards sensor payloads to the Durable Object instance for that zone.
- *   - GET /api/data/:zoneId forwards reads to the Durable Object instance for that zone.
  *
  * Key files / modules used by this router
  * - ./handlers/databaseQueries         : DB helpers (getDB, createZone, insert/return helpers)
  * - ./handlers/addTableEntry           : handleAddTableEntry (inserts into a table)
  * - ./handlers/getTableEntries         : handleGetTableEntries (query table rows with filters/limit)
  * - ./handlers/firebaseAuth            : verifyFirebaseToken used by auth middleware
- * - ./objects/streamingObject/StreamingObject : Durable Object class used to isolate device ingestion
  * - ./schema                          : Drizzle table definitions used to look up tables by name
  *
  * Routes summary
  * - POST /api/data/<table>        : Insert a row into a specific table (many table-specific routes wired).
  * - GET  /api/data/:table         : Generic tabular endpoint. Accepts query params as filters and `limit`.
- * - POST /api/data/:zoneId        : Forward device POST payloads to the zone's Durable Object.
- * - GET  /api/data/:zoneId        : Forward device GET requests to the zone's Durable Object.
- * - POST /api/zones               : Create a new zone (uses createZone helper).
  *
  * Important notes / conventions
  * - All /api/* routes require a valid Firebase Bearer token; middleware sets `userId` on context.
@@ -40,7 +33,6 @@
  *
  * Deployment / bindings
  * - Expected environment bindings (Env):
- *     STREAMING_OBJECT : Durable Object namespace
  *     FIREBASE_PROJECT_ID
  *     FIREBASE_API_KEY
  *     DB               : D1Database
@@ -52,8 +44,6 @@
 import { Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
-import { getDB, createZone } from './handlers/databaseQueries';
-import { StreamingObject } from './objects/streamingObject/StreamingObject';
 import { verifyFirebaseToken } from './handlers/firebaseAuth';
 import { handleGetTableEntries } from './handlers/getTableEntries';
 import * as schema from './schema';
@@ -77,7 +67,7 @@ const app = new Hono<{ Bindings: Env }>();
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
 
-
+// Require all API routes below this declaration to use a Firebase auth token
 app.use('/api/*', async (c, next) => {
 	const authHeader = c.req.header('Authorization');
 	if (!authHeader?.startsWith('Bearer ')) {
@@ -99,9 +89,8 @@ app.use('/api/*', async (c, next) => {
 
 // === All private API routes (require Firebase auth token) go below this line ===
 
-// === POST Routes for database tables === \\
-
 /**
+ * POST Routes for database tables
  * 10.13 - Created by Drew
  */
 app.post('api/data/user', async (c) => {
@@ -112,9 +101,6 @@ app.post('api/data/user', async (c) => {
 	);
 });
 
-/**
- * 10.13 - Created by Drew
- */
 app.post('/api/data/sensors', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -123,9 +109,6 @@ app.post('/api/data/sensors', async (c) => {
 	);
 });
 
-/**
- * 10.13 - Created by Drew
- */
 app.post('/api/data/zone', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -134,9 +117,6 @@ app.post('/api/data/zone', async (c) => {
 	);
 });
 
-/**
- * 10.13 - Created by Drew
- */
 app.post('/api/data/tempAndHumidity', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -145,9 +125,6 @@ app.post('/api/data/tempAndHumidity', async (c) => {
 	);
 });
 
-/**
- * 10.13 - Created by Drew
- */
 app.post('/api/data/pings', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -156,9 +133,6 @@ app.post('/api/data/pings', async (c) => {
 	);
 });
 
-/**
- * 10.13 - Created by Drew
- */
 app.post('/api/data/waterSchedule', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -167,9 +141,6 @@ app.post('/api/data/waterSchedule', async (c) => {
 	);
 });
 
-/**
- * 10.13 - Created by Drew
- */
 app.post('/api/data/fanSchedule', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -178,9 +149,6 @@ app.post('/api/data/fanSchedule', async (c) => {
 	);
 });
 
-/**
- * 10.13 - Created by Drew
- */
 app.post('/api/data/waterLog', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -189,9 +157,6 @@ app.post('/api/data/waterLog', async (c) => {
 	);
 });
 
-/**
- * 10.13 - Created by Drew
- */
 app.post('/api/data/fanLog', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -200,9 +165,6 @@ app.post('/api/data/fanLog', async (c) => {
 	);
 });
 
-/**
- * 10.13 - Created by Drew
- */
 app.post('/api/data/rasPi', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -211,11 +173,6 @@ app.post('/api/data/rasPi', async (c) => {
 	);
 });
 
-/**
- * 10.13 Created by Drew
- * 
- * Inserts a row into the alert table
- */
 app.post('/api/data/alert', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -224,11 +181,6 @@ app.post('/api/data/alert', async (c) => {
 	);
 });
 
-/**
- * 10.8 Created by Drew
- * 
- * Inserts a row into the alert table
- */
 app.post('/api/data/integration', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -237,9 +189,6 @@ app.post('/api/data/integration', async (c) => {
 	);
 });
 
-/**
- * 10.13 Created by Drew
- */
 app.post('/api/data/plantInventory', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -264,65 +213,4 @@ app.get('api/data/:table', async (c) => {
 	return handleGetTableEntries(table, c);
 });
 
-/**
- * Created by Nick
- * 
- * Forwarding logic added by Drew on 9.21
- * Forwarding logic protected with firebase by Nick 10.1
- * updated by nick 10.4
- */
-app.post('/api/data/:zoneId', async (c) => {
-	const zoneId = c.req.param('zoneId');
-	const userId = c.get('userId');
-
-	const doId = c.env.STREAMING_OBJECT.idFromName(zoneId);
-	const stub = c.env.STREAMING_OBJECT.get(doId);
-
-	const original = c.req.raw;
-	const headers = new Headers(original.headers);
-
-	if (userId) headers.set('x-user-id', userId);
-	headers.set('x-zone-id', zoneId);
-
-	const forwarded = new Request(original, { headers });
-	return stub.fetch(forwarded);
-});
-
-/**
- * Created by Drew on 9.21
- * updated by nick 10.4
- */
-app.get('/api/data/:zoneId', async (c) => {
-	const zoneId = c.req.param('zoneId');
-	const userId = c.get('userId');
-
-	const doId = c.env.STREAMING_OBJECT.idFromName(zoneId);
-	const stub = c.env.STREAMING_OBJECT.get(doId);
-
-	const headers = new Headers(c.req.raw.headers);
-	if (userId) headers.set('x-user-id', userId);
-
-	const forwarded = new Request(c.req.url, {
-		method: "GET",
-		headers
-	});
-	return stub.fetch(forwarded);
-});
-
-//wrote route for zone creation nick 10.3
-app.post('/api/zones', async (c) => {
-	const userId = c.get('userId');
-
-	const { zoneName } = await c.req.json();
-	if (!zoneName) {
-		return c.json({ error: 'zoneName is required' }, 400);
-	}
-
-	const db = getDB({ DB: c.env.DB });
-	const newZoneId = await createZone(db, userId, zoneName);
-
-	return c.json({ zoneId: newZoneId, zoneName: zoneName });
-});
-
 export default app;
-export { StreamingObject };

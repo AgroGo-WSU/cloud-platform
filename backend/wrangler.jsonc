@@ -11,22 +11,6 @@
 		"FIREBASE_PROJECT_ID": "agrogo-c4f0e",
 		"FIREBASE_API_KEY": "AIzaSyD5H47l8jzAJeve392CLEPPRVWFad40KJE"
 	},
-	"migrations": [
-		{
-			"new_sqlite_classes": [
-				"StreamingObject"
-			],
-			"tag": "v1"
-		}
-	],
-	"durable_objects": {
-		"bindings": [
-			{
-				"name": "STREAMING_OBJECT",
-        		"class_name": "StreamingObject"
-			}
-		]
-	},
 	"d1_databases": [
 		{
 			"binding": "DB",
