@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "670aa61a-075a-4448-85bd-475414a19e6d",
-  "prevId": "86a0833a-34da-43d9-b0c1-a37004cec2c2",
+  "id": "19b3ca8d-121b-480d-9d0a-3d9597d80240",
+  "prevId": "670aa61a-075a-4448-85bd-475414a19e6d",
   "tables": {
     "alert": {
       "name": "alert",
@@ -32,14 +32,14 @@
           "name": "severity",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "status": {
           "name": "status",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         }
       },
@@ -107,7 +107,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {},
@@ -160,8 +160,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "sensorID": {
-          "name": "sensorID",
+        "sensorId": {
+          "name": "sensorId",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -197,12 +197,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "fanSchedule_sensorID_sensors_id_fk": {
-          "name": "fanSchedule_sensorID_sensors_id_fk",
+        "fanSchedule_sensorId_sensors_id_fk": {
+          "name": "fanSchedule_sensorId_sensors_id_fk",
           "tableFrom": "fanSchedule",
           "tableTo": "sensors",
           "columnsFrom": [
-            "sensorID"
+            "sensorId"
           ],
           "columnsTo": [
             "id"
@@ -255,7 +255,7 @@
         },
         "expires_at": {
           "name": "expires_at",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -291,8 +291,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "sensorID": {
-          "name": "sensorID",
+        "sensorId": {
+          "name": "sensorId",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -311,7 +311,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {},
@@ -329,12 +329,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "pings_sensorID_sensors_id_fk": {
-          "name": "pings_sensorID_sensors_id_fk",
+        "pings_sensorId_sensors_id_fk": {
+          "name": "pings_sensorId_sensors_id_fk",
           "tableFrom": "pings",
           "tableTo": "sensors",
           "columnsFrom": [
-            "sensorID"
+            "sensorId"
           ],
           "columnsTo": [
             "id"
@@ -347,8 +347,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "plant": {
-      "name": "plant",
+    "plantInventory": {
+      "name": "plantInventory",
       "columns": {
         "id": {
           "name": "id",
@@ -388,9 +388,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "plant_user_id_user_id_fk": {
-          "name": "plant_user_id_user_id_fk",
-          "tableFrom": "plant",
+        "plantInventory_user_id_user_id_fk": {
+          "name": "plantInventory_user_id_user_id_fk",
+          "tableFrom": "plantInventory",
           "tableTo": "user",
           "columnsFrom": [
             "user_id"
@@ -401,9 +401,9 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "plant_zone_id_zone_id_fk": {
-          "name": "plant_zone_id_zone_id_fk",
-          "tableFrom": "plant",
+        "plantInventory_zone_id_zone_id_fk": {
+          "name": "plantInventory_zone_id_zone_id_fk",
+          "tableFrom": "plantInventory",
           "tableTo": "zone",
           "columnsFrom": [
             "zone_id"
@@ -435,7 +435,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "default": "CURRENT_TIMESTAMP"
         },
         "status": {
           "name": "status",
@@ -540,7 +540,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "default": "CURRENT_TIMESTAMP"
         },
         "value": {
           "name": "value",
@@ -586,7 +586,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "default": "CURRENT_TIMESTAMP"
         },
         "location": {
           "name": "location",
@@ -660,7 +660,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {},
@@ -713,8 +713,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "sensorID": {
-          "name": "sensorID",
+        "sensorId": {
+          "name": "sensorId",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -743,12 +743,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "waterSchedule_sensorID_sensors_id_fk": {
-          "name": "waterSchedule_sensorID_sensors_id_fk",
+        "waterSchedule_sensorId_sensors_id_fk": {
+          "name": "waterSchedule_sensorId_sensors_id_fk",
           "tableFrom": "waterSchedule",
           "tableTo": "sensors",
           "columnsFrom": [
-            "sensorID"
+            "sensorId"
           ],
           "columnsTo": [
             "id"
@@ -791,7 +791,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "default": "CURRENT_TIMESTAMP"
         },
         "description": {
           "name": "description",
@@ -826,8 +826,14 @@
   "enums": {},
   "_meta": {
     "schemas": {},
-    "tables": {},
-    "columns": {}
+    "tables": {
+      "\"plant\"": "\"plantInventory\""
+    },
+    "columns": {
+      "\"fanSchedule\".\"sensorID\"": "\"fanSchedule\".\"sensorId\"",
+      "\"pings\".\"sensorID\"": "\"pings\".\"sensorId\"",
+      "\"waterSchedule\".\"sensorID\"": "\"waterSchedule\".\"sensorId\""
+    }
   },
   "internal": {
     "indexes": {}
