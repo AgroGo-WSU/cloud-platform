@@ -48,8 +48,6 @@ import { verifyFirebaseToken } from './handlers/firebaseAuth';
 import { handleGetTableEntries } from './handlers/getTableEntries';
 import * as schema from './schema';
 import { handleAddTableEntry } from './handlers/addTableEntry';
-import { getDB, createZone, createUser } from './handlers/databaseQueries';
-import { StreamingObject } from './objects/streamingObject/StreamingObject';
 import { emailDistributionHandler } from "./workers/emailDistributionWorker/emailDistributionWorker";
 
 export interface Env {
@@ -210,16 +208,17 @@ app.post('/api/data/plantInventory', async (c) => {
  * 
  * Returns entries in a table based on params passed by the request
  */
-// app.get('api/data/:table', async (c) => {
-// 	// Find the table's name that was passed
-// 	const tableName = c.req.param('table');
+app.get('api/data/:table', async (c) => {
+	// Find the table's name that was passed
+	const tableName = c.req.param('table');
 
-// 	// Check if the table exists in the schema
-// 	const table = (schema as Record<string, any>)[tableName];
-// 	if(!table) return c.json({ error: `Table ${tableName} not found`}, 404);
+	// Check if the table exists in the schema
+	const table = (schema as Record<string, any>)[tableName];
+	if(!table) return c.json({ error: `Table ${tableName} not found`}, 404);
 
-// 	return handleGetTableEntries(table, c);
-// });
+	return handleGetTableEntries(table, c);
+});
+
 /**
  * Uses emailDistributionHandler to send an email via the Resend API
  * 
