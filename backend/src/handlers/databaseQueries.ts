@@ -108,6 +108,48 @@ export async function createUser(
     });
 }
 
+export async function createPi(
+    db: DB, 
+    userId: string, 
+    email: string,
+    firstName: string,
+    lastName: string
+): Promise<void> {
+    const user = await db.query.user.findFirst({
+        where: eq(schema.user.id, userId),
+    });
+
+    if(user) return;
+
+    await db.insert(schema.user).values({ 
+        id: userId, 
+        email: email,
+        firstName: firstName,
+        lastName: lastName
+    });
+}
+
+export async function createReading(
+    db: DB, 
+    userId: string, 
+    email: string,
+    firstName: string,
+    lastName: string
+): Promise<void> {
+    const user = await db.query.user.findFirst({
+        where: eq(schema.user.id, userId),
+    });
+
+    if(user) return;
+
+    await db.insert(schema.user).values({ 
+        id: userId, 
+        email: email,
+        firstName: firstName,
+        lastName: lastName
+    });
+}
+
 /**
  * Creates a new zone for a given user.
  * This would be called from an endpoint that the user interacts with on the web app.
