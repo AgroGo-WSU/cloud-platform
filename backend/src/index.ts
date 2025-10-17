@@ -200,18 +200,20 @@ app.post('/api/data/plantInventory', async (c) => {
 /**
  * 10.13 Route created by Drew
  * 
+ * 10.17 Route deprecated by Drew. Too insecure
+ * 
  * Returns entries in a table based on params passed by the request
  */
-app.get('api/data/:table', async (c) => {
-	// Find the table's name that was passed
-	const tableName = c.req.param('table');
+// app.get('api/data/:table', async (c) => {
+// 	// Find the table's name that was passed
+// 	const tableName = c.req.param('table');
 
-	// Check if the table exists in the schema
-	const table = (schema as Record<string, any>)[tableName];
-	if(!table) return c.json({ error: `Table ${tableName} not found`}, 404);
+// 	// Check if the table exists in the schema
+// 	const table = (schema as Record<string, any>)[tableName];
+// 	if(!table) return c.json({ error: `Table ${tableName} not found`}, 404);
 
-	return handleGetTableEntries(table, c);
-});
+// 	return handleGetTableEntries(table, c);
+// });
 
 export default app;
 
