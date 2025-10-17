@@ -214,3 +214,12 @@ app.get('api/data/:table', async (c) => {
 });
 
 export default app;
+
+// Durable Object stub to prevent Cloudflare from throwing errors
+export class StreamingObject {
+	constructor(public state: DurableObjectState, public env: any) {}
+
+	async fetch(request: Request) {
+		return new Response("Durable Object stub active");
+	}
+}

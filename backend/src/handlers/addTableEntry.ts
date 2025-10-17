@@ -1,4 +1,5 @@
 import { SQLiteTable } from "drizzle-orm/sqlite-core";
+import { InferInsertModel } from "drizzle-orm";
 import { Context } from "hono";
 import { getDB, insertTableEntry } from "./databaseQueries";
 
@@ -10,16 +11,16 @@ import { getDB, insertTableEntry } from "./databaseQueries";
  * @param {Object} entry - The record to be inserted into the table.
  * @returns {Promise<Response>} A JSON response indicating success or failure.
  */
-export async function handleAddTableEntry(
-    table: SQLiteTable,
+export async function handleAddTableEntry<T extends SQLiteTable>(
+    table: T,
     c: Context,
-    entry: {}
+    entry: InferInsertModel<T>
 ) {
     try {
         const db = getDB( { DB: c.env.DB });
 
-        await insertTableEntry(db, table, entry);
-        return c.json({ success: true, data: entry }, 200)
+        const row = await insertTableEntry(db, table, entry);
+        return c.json({ success: true, data: row }, 200)
     }  catch(error) {
 		console.error(error);
 		return c.json({ error: 'Failed to insert entry.' }, 500);

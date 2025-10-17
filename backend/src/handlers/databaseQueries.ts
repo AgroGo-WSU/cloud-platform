@@ -11,6 +11,7 @@
 import { drizzle, DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "../schema";
 import { eq, Table, InferInsertModel, InferSelectModel, and } from "drizzle-orm";
+import { SQLiteTable } from "drizzle-orm/sqlite-core";
 
 /**
  * Strongly typed Drizzle database instance
@@ -34,12 +35,14 @@ export function getDB(env: {DB: D1Database}): DB {
     return drizzle(env.DB, { schema })
 }
 
-export async function insertTableEntry<T extends Table>(
+export async function insertTableEntry<T extends SQLiteTable>(
     db: DB,
     table: T,
-    entry: InferInsertModel<T> // Type checks that the entry matches the format of its table
-): Promise<void> {
-    await db.insert(table).values(entry);
+    entry
+) {
+    const insertedRows = await db.insert(table).values(entry).returning();
+    
+    return insertedRows[0];
 }
 
 export async function returnTableEntries<T extends Table>(
