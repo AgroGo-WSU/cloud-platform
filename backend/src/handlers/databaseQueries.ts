@@ -10,7 +10,8 @@
 
 import { drizzle, DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "../schema";
-import { or, eq, desc } from "drizzle-orm";
+import { eq, desc, Table, InferInsertModel, InferSelectModel, and } from "drizzle-orm";
+import { SQLiteTable } from "drizzle-orm/sqlite-core";
 
 /**
  * Strongly typed Drizzle database instance
@@ -33,6 +34,86 @@ export type DB = DrizzleD1Database<typeof schema>;
 export function getDB(env: {DB: D1Database}): DB {
     return drizzle(env.DB, { schema })
 }
+
+export async function insertTableEntry<T extends SQLiteTable>(
+    db: DB,
+    table: T,
+    entry: any
+) {
+    const insertedRows = await db.insert(table).values(entry).returning();
+    
+    return insertedRows[0];
+}
+
+export async function returnTableEntries<T extends Table>(
+    db: DB,
+    table: T,
+    condition: Partial<InferSelectModel<T>>, // Optional filtering
+    amount: number
+): Promise<InferSelectModel<T>[]> {
+    let whereClause;
+
+    // Only build a WHERE clause if conditions were passed
+    if(condition && Object.keys(condition).length > 0) {
+        // Pull all clauses from the user's condition entry
+        const clauses = Object.entries(condition).map(
+            ([key, value]) => eq((table as any)[key], value)
+        );
+        // If the user put in > 1 condition, spread them to whereClause
+        // If the user put in 1 condition, use that one
+        // No need to check if no conditions were passed, handled in if block above
+        whereClause = clauses.length > 1 ? and(...clauses) : clauses[0];
+    }
+
+    // Build/return results
+    const result = await db
+        .select()
+        .from(table)
+        .where(whereClause)
+        .limit(amount);
+    return result;
+}
+
+/**
+ * Updates or inserts a mapping between a Raspberry Pi's MAC address
+ * and a Firebase user UID in the `user` table.
+ * 
+ * If the MAC address already exists, this updates the existing record.
+ * If not, it inserts a new row.
+ */
+// export async function updateDeviceUserMapping(
+//     db: DB,
+//     mac: string,
+//     firebaseUid: string
+// ): Promise<void> {
+//     try {
+
+//         // Normalize MAC
+//         const normalizedMac = mac.toLowerCase();
+
+//         // Check if MAC already exists in the table
+//         const existing = await db
+//             .select()
+//             .from(schema.user)
+//             .where(eq(schema.user.raspiMac, normalizedMac))
+//             .limit(1);
+        
+//         if(existing.length > 0) {
+//             // Update existing record
+//             await db
+//                 .update(schema.user)
+//                 .set({ firebaseUid })
+//                 .where(eq(schema.user.raspiMac, normalizedMac));
+//         } else {
+//             await db.insert(schema.user).values({
+//                 raspiMac: normalizedMac,
+//                 firebaseUid
+//             });
+//         }
+//     } catch(error) {
+
+//     }
+// }
 
 /**
  * Creates a new user in the database if they do not already exist.

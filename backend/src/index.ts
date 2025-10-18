@@ -28,6 +28,8 @@ import { cors } from 'hono/cors';
 import { getDB, createZone, createUser } from './handlers/databaseQueries';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
 import { emailDistributionHandler } from "./workers/emailDistributionWorker/emailDistributionWorker";
+import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
+import { handleLogin } from './handlers/handleLogin';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
@@ -48,54 +50,72 @@ const app = new Hono<{ Bindings: Env }>();
 app.use('*', cors());
 
 /**
- * Created by Drew on 10.8 - Creates a new user 
+ * Created by Drew on 10.18
+ * 
+ * User signs in with Firebase and sends their ID token.
+ * We verify it, get UID, and store/update their info in D1.
  */
-app.post('/api/data/user', async (c) => {
+app.post('/api/auth/login', async (c) => {
 	try {
-		const body = await c.req.json();
-		console.log("Incoming body:", body);
-
-		const { id, email, firstName, lastName } = body;
-
-		if(!id || !email || !firstName || !lastName) {
-			console.log("Missing params:", { id, email, firstName, lastName });
-			return c.json(
-				{ error: "id, email, firstName, and lastName are required" },
-				400
-			);
-		}
-
-		console.log("Getting DB instance...");
+		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
 		const db = getDB({ DB: c.env.DB });
-		await createUser(db, id, email, firstName, lastName);
-		return c.json({ message: "User created successfully!" }, 201);
+
+		// Parse first/last name from request body
+		const { firstName, lastName } = await c.req.json();
+
+		const result = await handleLogin(
+			db, 
+			decoded.uid, 
+			decoded.email!, 
+			firstName, 
+			lastName
+		);
+
+		return c.json({
+			message: 'Login successful',
+			user: result.userRecord
+		}, 200);
 	} catch(error) {
-		console.error("Error creating user:", error)
-		return c.json({ error: "Internal server error" }, 500)
+		console.error('Error in /api/auth/login:', error);
+		return c.json({ error: (error as Error).message }, 400);
 	}
 });
+
+
+/**
+ * Created by Drew on 10.18
+ * 
+ * Links a user's Firebase UID to a device's MAC address
+ */
+// app.post("/api/pairDevice", async (c) => {
+// 	try {
+// 		const { mac, firebaseUid } = await c.req.json();
+
+// 		if(!mac || !firebaseUid) {
+// 			return c.json({ error: "Missing mac or firebaseUid" }, 400);
+// 		}
+
+// 		const db = getDB({ DB: c.env.DB });
+// 		await updateDeviceUserMapping(db, mac, firebaseUid);
+		
+// 		return c.json({ message: "Device successfully paired." }, 200);
+// 	} catch(error) {
+// 		console.error("Error in /api/pairing:", error);
+// 		return c.json({ error: "Internal server error" }, 500);
+// 	}
+// });
 
 app.use('/api/*', async (c, next) => {
-	const authHeader = c.req.header('Authorization');
-	if (!authHeader?.startsWith('Bearer ')) {
-		return c.json({ error: 'Missing or malformed token' }, 401);
+	try {
+		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
+		c.set('userId', decoded.uid);
+		return next();
+	} catch(error) {
+		return c.json({ error: (error as Error).message }, 401);
 	}
-
-	const token = authHeader.split(' ')[1];
-	const decoded = await verifyFirebaseToken(token, c.env.FIREBASE_API_KEY);
-
-	console.log("Manual verification result:", decoded);
-
-	if (!decoded) {
-		return c.json({ error: 'Invalid or expired token' }, 401);
-	}
-
-	c.set('userId', decoded.uid); 
-	return next();
 });
+
 // === All private API routes (require Firebase auth token) go below this line ===
-
-
 
 /**
  * Created by Nick

@@ -30,8 +30,8 @@ export const user = sqliteTable("user",{
     id: text("id").primaryKey(),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
     email: text("email").notNull(),
-    firstName: text("first_name").notNull(),
-    lastName: text("last_name").notNull()
+    firstName: text("first_name"),
+    lastName: text("last_name")
 })
 
 /**
