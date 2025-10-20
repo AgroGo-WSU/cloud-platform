@@ -34,6 +34,7 @@ import { handleRaspiPairing } from './handlers/handleRaspiPairing';
 import * as schema from "./schema";
 import { eq } from 'drizzle-orm';
 import { handlePiSensorDataPosting } from './handlers/raspiHandlers';
+import { handleReturnUserDataByTable } from './handlers/userDataHandlers';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
@@ -136,6 +137,12 @@ app.use('/api/*', async (c, next) => {
  */
 app.post('api/raspi/sensorReadings', async(c) => {
 	return handlePiSensorDataPosting(c);
+});
+
+
+app.post('api/user/:table', async(c) => {
+	const bearer = c.req.header('Authorization') || '';
+	return handleReturnUserDataByTable(c, bearer);
 });
 
 /**

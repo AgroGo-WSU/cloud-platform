@@ -75,47 +75,6 @@ export async function returnTableEntries<T extends Table>(
 }
 
 /**
- * Updates or inserts a mapping between a Raspberry Pi's MAC address
- * and a Firebase user UID in the `user` table.
- * 
- * If the MAC address already exists, this updates the existing record.
- * If not, it inserts a new row.
- */
-// export async function updateDeviceUserMapping(
-//     db: DB,
-//     mac: string,
-//     firebaseUid: string
-// ): Promise<void> {
-//     try {
-
-//         // Normalize MAC
-//         const normalizedMac = mac.toLowerCase();
-
-//         // Check if MAC already exists in the table
-//         const existing = await db
-//             .select()
-//             .from(schema.user)
-//             .where(eq(schema.user.raspiMac, normalizedMac))
-//             .limit(1);
-        
-//         if(existing.length > 0) {
-//             // Update existing record
-//             await db
-//                 .update(schema.user)
-//                 .set({ firebaseUid })
-//                 .where(eq(schema.user.raspiMac, normalizedMac));
-//         } else {
-//             await db.insert(schema.user).values({
-//                 raspiMac: normalizedMac,
-//                 firebaseUid
-//             });
-//         }
-//     } catch(error) {
-
-//     }
-// }
-
-/**
  * Creates a new user in the database if they do not already exist.
  * This should be called after a user successfully authenticates with Firebase.
  * 
