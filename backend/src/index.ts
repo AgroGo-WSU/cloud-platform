@@ -31,6 +31,9 @@ import { emailDistributionHandler } from "./workers/emailDistributionWorker/emai
 import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
 import { handleLogin } from './handlers/handleLogin';
 import { handleRaspiPairing } from './handlers/handleRaspiPairing';
+import * as schema from "./schema";
+import { eq } from 'drizzle-orm';
+import { handlePiSensorDataPosting } from './handlers/raspiHandlers';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
@@ -95,10 +98,6 @@ app.post('/api/auth/login', async (c) => {
 		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
 		const db = getDB({ DB: c.env.DB });
 
-		console.log('Login request body:', c.body);
-
-		console.log("Using DB:", c.env.DB);
-
 		// Parse first/last name from request body
 		const { firstName, lastName } = await c.req.json();
 
@@ -131,6 +130,13 @@ app.use('/api/*', async (c, next) => {
 });
 
 // === All private API routes (require Firebase auth token) go below this line ===
+
+/**
+ * Created by Drew on 10.20
+ */
+app.post('api/raspi/sensorReadings', async(c) => {
+	return handlePiSensorDataPosting(c);
+});
 
 /**
  * Created by Nick

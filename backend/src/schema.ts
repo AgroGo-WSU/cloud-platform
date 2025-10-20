@@ -83,6 +83,7 @@ export const pings = sqliteTable("pings",{
     sensorId: text("sensorId").references(() => sensors.sensorId), // make sure it's the right sensor
     confirmed: text("confirmed", { enum: pingsConfirmedEnum }).notNull(), // device still connected or not
     time: text("confirmed_at").default(sql`CURRENT_TIMESTAMP`).notNull(), // time of confirmation
+    value: text("value")
 });
 
 export const waterSchedule = sqliteTable("waterSchedule",{
