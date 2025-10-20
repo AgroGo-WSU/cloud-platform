@@ -14,7 +14,6 @@
     <h1>Firebase Auth & API Tester</h1>
 
     <div>
-        <button onclick="testLoginRoute()">Test /api/auth/login</button>
         <button onclick="loginWithGoogle()">Sign in with Google</button>
         <p id="authStatus">Status: Not logged in</p>
     </div>
@@ -72,39 +71,6 @@
                 document.getElementById('tokenDisplay').textContent = 'No token yet. Please log in.';
             }
         });
-
-        window.testLoginRoute = async () => {
-            if(!idToken) {
-                alert("Please sign in with Google first");
-                return;
-            }
-
-            try {
-                const user = window.currentUser; // assuming you set this after Google sign-in
-                const firstName = user?.displayName?.split(" ")[0] || "";
-                const lastName = user?.displayName?.split(" ").slice(1).join(" ") || "";
-                const email = user?.email || "";
-
-                const res = await fetch("http://localhost:8787/api/auth/login", {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${idToken}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        email,
-                        firstName,
-                        lastName
-                    })
-                });
-
-                const data = await res.json();
-                document.getElementById("response").textContent = JSON.stringify(data, null, 2);
-            } catch(err) {
-                console.error("Login route test failed:", err);
-                document.getElementById("response").textContent = err.message
-            }
-        }
 
         window.loginWithGoogle = () => {
             const provider = new GoogleAuthProvider();

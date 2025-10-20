@@ -90,6 +90,8 @@ app.post('/api/auth/login', async (c) => {
 		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
 		const db = getDB({ DB: c.env.DB });
 
+		console.log('Login request body:', c.body);
+
 		console.log("Using DB:", c.env.DB);
 
 		// Parse first/last name from request body

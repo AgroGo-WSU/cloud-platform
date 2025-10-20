@@ -222,10 +222,5 @@ export async function createZone(db: DB, userId: string, zoneName: string): Prom
  * updated 10.2 -nick
  */
 export async function getRecentReadings(db: DB, zoneId: string, limit = 10) {
-    return db
-        .select()
-        .from(schema.deviceReadings)
-        .where(eq(schema.deviceReadings.zoneId, zoneId))
-        .orderBy(desc(schema.deviceReadings.receivedAt))
-        .limit(limit)
+    return null
 }

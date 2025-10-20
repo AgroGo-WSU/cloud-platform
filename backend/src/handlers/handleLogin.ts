@@ -31,9 +31,10 @@ export async function handleLogin(
             .where(eq(schema.user.id, firebaseUid))
             .all();
         
-        const existingUser = existingUsers[0];
+        let existingUser;
         
-        if(existingUser) {
+        if(existingUsers.length > 0) {
+            existingUser = existingUsers[0];
             console.log(`[handleLogin] Existing user logged in: ${firebaseUid}`);
             return { userRecord: existingUser };
         }
@@ -45,7 +46,7 @@ export async function handleLogin(
             firstName: firstName,
             lastName: lastName,
             // Blank on login, mac is added by the pairing function after insertion
-            raspiMac: "" 
+            //raspiMac: "" 
         };
 
         await db.insert(schema.user).values(newUser).run();
