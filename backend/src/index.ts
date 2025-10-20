@@ -51,6 +51,11 @@ const app = new Hono<{ Bindings: Env }>();
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
 
+/**
+ * Created by Drew on 10.20
+ * 
+ * Take a user and pair a Raspberry Pi (by mac address) to their account
+ */
 app.post('api/auth/pairDevice', async (c) => {
 	try {
 		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
