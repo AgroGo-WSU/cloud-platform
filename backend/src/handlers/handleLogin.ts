@@ -43,7 +43,9 @@ export async function handleLogin(
             id: firebaseUid,
             email: email,
             firstName: firstName,
-            lastName: lastName
+            lastName: lastName,
+            // Blank on login, mac is added by the pairing function after insertion
+            raspiMac: "" 
         };
 
         await db.insert(schema.user).values(newUser).run();

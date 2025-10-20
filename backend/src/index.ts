@@ -30,11 +30,13 @@ import { StreamingObject } from './objects/streamingObject/StreamingObject';
 import { emailDistributionHandler } from "./workers/emailDistributionWorker/emailDistributionWorker";
 import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
 import { handleLogin } from './handlers/handleLogin';
+import { handleRaspiPairing } from './handlers/handleRaspiPairing';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
 	FIREBASE_PROJECT_ID: string;
 	FIREBASE_API_KEY: string;
+	ENV_NAME: string;
 	DB: D1Database;
 }
 
@@ -49,6 +51,34 @@ const app = new Hono<{ Bindings: Env }>();
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
 
+app.post('api/auth/pairDevice', async (c) => {
+	try {
+		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
+		const { raspiMac, firstName, lastName } = await c.req.json();
+
+		const rawMac = raspiMac.toString();
+		if(!rawMac) {
+			return c.json({ error: "Missing raspiMac in request body" }, 400);
+		}
+
+		const db = getDB({ DB: c.env.DB });
+		
+		const result = await handleRaspiPairing(
+			db,
+			decoded.uid,
+			decoded.email!,
+			rawMac,
+			firstName,
+			lastName
+		);
+
+		return c.json(result, 200);
+	} catch(error) {
+		console.error("[pairDevice] Error:", error);
+		return c.json({ error: (error as Error).message }, 500);
+	}
+});
+
 /**
  * Created by Drew on 10.18
  * 
@@ -59,6 +89,8 @@ app.post('/api/auth/login', async (c) => {
 	try {
 		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
 		const db = getDB({ DB: c.env.DB });
+
+		console.log("Using DB:", c.env.DB);
 
 		// Parse first/last name from request body
 		const { firstName, lastName } = await c.req.json();
@@ -80,30 +112,6 @@ app.post('/api/auth/login', async (c) => {
 		return c.json({ error: (error as Error).message }, 400);
 	}
 });
-
-
-/**
- * Created by Drew on 10.18
- * 
- * Links a user's Firebase UID to a device's MAC address
- */
-// app.post("/api/pairDevice", async (c) => {
-// 	try {
-// 		const { mac, firebaseUid } = await c.req.json();
-
-// 		if(!mac || !firebaseUid) {
-// 			return c.json({ error: "Missing mac or firebaseUid" }, 400);
-// 		}
-
-// 		const db = getDB({ DB: c.env.DB });
-// 		await updateDeviceUserMapping(db, mac, firebaseUid);
-		
-// 		return c.json({ message: "Device successfully paired." }, 200);
-// 	} catch(error) {
-// 		console.error("Error in /api/pairing:", error);
-// 		return c.json({ error: "Internal server error" }, 500);
-// 	}
-// });
 
 app.use('/api/*', async (c, next) => {
 	try {

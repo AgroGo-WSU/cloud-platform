@@ -26,7 +26,7 @@ export async function requireFirebaseHeader(c: any, firebaseAPIKey: string) {
   const decoded = await verifyFirebaseToken(token, firebaseAPIKey);
 
   if(!decoded) {
-    throw new Error('Invalid or expored Firebase token');
+    throw new Error('Invalid or expired Firebase token');
   }
 
   return decoded;

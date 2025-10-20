@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "b26e6fb0-b91d-46d2-b225-cd32a94f6547",
-  "prevId": "86a0833a-34da-43d9-b0c1-a37004cec2c2",
+  "id": "1363b6cf-26af-4e90-9215-3154651b595d",
+  "prevId": "b26e6fb0-b91d-46d2-b225-cd32a94f6547",
   "tables": {
     "alert": {
       "name": "alert",
@@ -333,14 +333,21 @@
           "name": "first_name",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "last_name": {
           "name": "last_name",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "raspi_mac": {
+          "name": "raspi_mac",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },
@@ -415,9 +422,7 @@
   "enums": {},
   "_meta": {
     "schemas": {},
-    "tables": {
-      "\"device_readings\"": "\"deviceReadings\""
-    },
+    "tables": {},
     "columns": {}
   },
   "internal": {
