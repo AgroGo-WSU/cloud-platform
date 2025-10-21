@@ -140,7 +140,7 @@ app.post('api/raspi/sensorReadings', async(c) => {
 });
 
 
-app.post('api/user/:table', async(c) => {
+app.get('api/user/:table', async(c) => {
 	const bearer = c.req.header('Authorization') || '';
 	return handleReturnUserDataByTable(c, bearer);
 });

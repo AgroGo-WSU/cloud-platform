@@ -19,6 +19,13 @@ export async function handleReturnUserDataByTable(c: Context, bearer: string) {
 
         const db = getDB({ DB: c.env.DB });
 
+        // Verify if the table actually has a userId column
+        if(!('userId' in table)) {
+            return c.json({ error: `Table ${tableName} does not have a userId column` }, 400)
+        }
+
+        console.log('[handleReturnUserDataByTable]', { tableName, userId });
+        
         // Only attempt to filter by userId if the table has a userId column
         const rows = await db.select()
             .from(table)
