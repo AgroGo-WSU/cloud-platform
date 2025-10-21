@@ -31,9 +31,7 @@ import { emailDistributionHandler } from "./workers/emailDistributionWorker/emai
 import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
 import { handleLogin } from './handlers/handleLogin';
 import { handleRaspiPairing } from './handlers/handleRaspiPairing';
-import * as schema from "./schema";
-import { eq } from 'drizzle-orm';
-import { handlePiSensorDataPosting } from './handlers/raspiHandlers';
+import { handlePiMacDataRetrieval, handlePiSensorDataPosting } from './handlers/raspiHandlers';
 import { handleReturnUserDataByTable } from './handlers/userDataHandlers';
 
 export interface Env {
@@ -136,13 +134,23 @@ app.use('/api/*', async (c, next) => {
  * Created by Drew on 10.20
  */
 app.post('api/raspi/sensorReadings', async(c) => {
-	return handlePiSensorDataPosting(c);
+	return await handlePiSensorDataPosting(c);
+});
+
+/**
+ * Created by Drew on 10.20
+ */
+app.get('api/raspi/:mac', async(c) => {
+	return await handlePiMacDataRetrieval(c);
 });
 
 
+/**
+ * Created by Drew on 10.20
+ */
 app.get('api/user/:table', async(c) => {
 	const bearer = c.req.header('Authorization') || '';
-	return handleReturnUserDataByTable(c, bearer);
+	return await handleReturnUserDataByTable(c, bearer);
 });
 
 /**
