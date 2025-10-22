@@ -166,7 +166,6 @@ app.get('api/raspi/:mac', async(c) => {
 	return await handlePiMacDataRetrieval(c);
 });
 
-
 /**
  * Created by Drew on 10.20
  */
@@ -175,7 +174,6 @@ app.get('api/user/:table', async(c) => {
 	return await handleReturnUserDataByTable(c, bearer);
 });
 
-// === All private API routes (require Firebase auth token) go below this line ===
 
 /**
  * POST Routes for database tables
