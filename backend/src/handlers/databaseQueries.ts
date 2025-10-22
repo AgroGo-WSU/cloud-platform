@@ -87,7 +87,8 @@ export async function returnTableEntries<T extends Table>(
  */
 export async function createUser(
     db: DB, 
-    userId: string, 
+    userId: string,
+    location: string, 
     email: string,
     firstName: string,
     lastName: string
@@ -101,6 +102,7 @@ export async function createUser(
     await db.insert(schema.user).values({ 
         id: userId, 
         email: email,
+        location: location,
         firstName: firstName,
         lastName: lastName
     });
@@ -180,6 +182,11 @@ export async function createZone(db: DB, userId: string, zoneName: string): Prom
  * Drew 9.22 Created method
  * updated 10.2 -nick
  */
-export async function getRecentReadings(db: DB, zoneId: string, limit = 10) {
-    return null
-}
+// export async function getRecentReadings(db: DB, zoneId: string, limit = 10) {
+//     return db
+//         .select()
+//         .from(schema.deviceReadings)
+//         .where(eq(schema.deviceReadings.zoneId, zoneId))
+//         .orderBy(desc(schema.deviceReadings.receivedAt))
+//         .limit(limit)
+// }

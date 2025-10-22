@@ -1,4 +1,4 @@
-//completely overhualed by nick 10.4
+//completely overhauled by nick 10.4
 interface FirebaseUser {
   uid: string;
   email?: string;
@@ -45,7 +45,7 @@ export async function requireFirebaseHeader(c: any, firebaseAPIKey: string) {
  * @param {string} apiKey - The Firebase project's Web API key used for authentication with the Identity Toolkit API.
  * @returns {Promise<FirebaseUser | null>} A promise that resolves to a `FirebaseUser` object if verification succeeds, or `null` if invalid or not found.
  */
-async function verifyFirebaseToken(token: string, apiKey: string): Promise<FirebaseUser | null> {
+export async function verifyFirebaseToken(token: string, apiKey: string): Promise<FirebaseUser | null> {
   const response = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
     {
