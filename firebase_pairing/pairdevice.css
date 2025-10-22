@@ -1,0 +1,153 @@
+:root {
+  --agro-primary: #173d23;
+  --agro-secondary: #f2eee3;
+  --agro-accent: #800020;
+  --agro-tertiary: #549227;
+}
+
+/* Full-page container with green frame and beige background */
+.auth-popup-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 14px solid var(--agro-primary);
+  background-color: var(--agro-secondary);
+  box-sizing: border-box;
+  z-index: 999;
+}
+
+/* Center card styling */
+.auth-popup-card {
+  background: white;
+  border-radius: 16px;
+  border: 6px solid var(--agro-accent);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  padding: 36px;
+  width: min(90vw, 420px);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* Title and subtitle */
+.auth-popup-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--agro-primary);
+}
+
+.auth-popup-subtitle {
+  color: #444;
+  margin-bottom: 24px;
+}
+
+/* Buttons */
+.auth-social-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.auth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-btn:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.auth-btn.google {
+  color: #333;
+}
+
+.auth-btn.github {
+  background: #24292e;
+  color: white;
+}
+
+.auth-btn.primary {
+  background: var(--agro-tertiary);
+  color: white;
+  border: none;
+}
+
+.auth-btn.primary:hover {
+  filter: brightness(1.1);
+}
+
+/* Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  margin: 16px 0;
+  font-size: 13px;
+}
+
+.auth-divider span {
+  flex: 1;
+  height: 1px;
+  background: #ddd;
+  margin: 0 8px;
+}
+
+/* Email form inputs */
+.auth-email {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.auth-email input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+}
+
+.auth-email input:focus {
+  outline: 2px solid var(--agro-tertiary);
+}
+
+/* Links below buttons */
+.auth-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-link {
+  border: none;
+  background: none;
+  color: var(--agro-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+/* Error / status text */
+.auth-error {
+  color: var(--agro-accent);
+  font-size: 13px;
+  margin-top: 12px;
+}
