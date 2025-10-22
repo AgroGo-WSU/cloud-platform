@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "5dbd74b7-6db9-4a29-9c45-0dc2a7205fb8",
-  "prevId": "ec9f1ccd-d93f-4bce-a359-32f166855f0b",
+  "id": "f02148f6-7428-471e-87e5-3a0ef0811e7f",
+  "prevId": "a1113e5b-4066-4e8e-bff7-ca18f79c8892",
   "tables": {
     "alert": {
       "name": "alert",
@@ -391,6 +391,14 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         }
       },
       "indexes": {},
@@ -739,6 +747,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },

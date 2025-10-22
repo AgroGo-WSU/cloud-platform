@@ -52,7 +52,7 @@ import { emailDistributionHandler } from "./handlers/handleEmailDistribution";
 import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
 import { handleLogin } from './handlers/handleLogin';
 import { handleRaspiPairing } from './handlers/handleRaspiPairing';
-import { handlePiMacDataRetrieval, handlePiSensorDataPosting } from './handlers/raspiHandlers';
+import { handlePiMacDataRetrieval, handlePiPairingStatus, handlePiSensorDataPosting } from './handlers/raspiHandlers';
 import { handleReturnUserDataByTable } from './handlers/userDataHandlers';
 
 export interface Env {
@@ -73,6 +73,24 @@ const app = new Hono<{ Bindings: Env }>();
 
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
+
+/**
+ * Created by Drew on 10.20
+ */
+app.get('api/raspi/:mac', async(c) => {
+	return await handlePiMacDataRetrieval(c);
+});
+
+app.get('api/raspi/pairingStatus', async(c) => {
+	return await handlePiPairingStatus(c);
+});
+
+/**
+ * Created by Drew on 10.20
+ */
+app.post('api/raspi/sensorReadings', async(c) => {
+	return await handlePiSensorDataPosting(c);
+});
 
 /**
  * Created by Drew on 10.20
@@ -279,7 +297,7 @@ app.post('/api/data/plantInventory', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.plantInventory, c,
-		{ userId: body.userId, plantType: body.plantType, plantName: body.plantName, zoneId: body.zoneId }
+		{ userId: body.userId, plantType: body.plantType, plantName: body.plantName, zoneId: body.zoneId, quantity: body.quantity }
 	);
 });
 

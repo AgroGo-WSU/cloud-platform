@@ -18,7 +18,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
  * Users Table
@@ -162,5 +162,6 @@ export const plantInventory = sqliteTable("plantInventory", {
     userId: text("user_id").notNull().references(() => user.id),
     plantType: text("plant_type"),
     plantName: text("plant_name"),
-    zoneId: text("zone_id").notNull().references(() => zone.id)
+    zoneId: text("zone_id").notNull().references(() => zone.id),
+    quantity: integer("quantity")
 });

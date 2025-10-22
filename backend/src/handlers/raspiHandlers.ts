@@ -6,6 +6,43 @@ import { Context } from "hono";
 const FAN_PIN = 17;
 const WATER_PIN = 27;
 
+export async function handlePiPairingStatus(c: Context) {
+    try {
+        const mac = c.req.param('mac');
+
+        if(!mac) {
+            return c.json({ success: false, error: 'MAC Address not provided' }, 400);
+        }
+
+        const db = getDB({ DB: c.env.DB });
+
+        // Determine whether this mac address exists in a row on the User table
+        const result = await db
+            .select()
+            .from(schema.user)
+            .where(eq(schema.user.raspiMac, mac))
+            .all();
+        
+        if(result.length > 0) {
+            return c.json ({
+                success: true,
+                paired: true,
+                user: result[0].id
+            }, 200);
+        }        
+
+        return c.json({
+            success: true,
+            paired: false,
+            message: "No user found with this MAC address"
+        }, 200);
+
+    } catch(error) {
+        console.error('[handlePiPairingStatus] error:', error);
+        return c.json({ error: (error as Error).message }, 500)
+    }
+}
+
 export async function handlePiMacDataRetrieval(c: Context) {
     try {
         const mac = c.req.param('mac');
@@ -77,6 +114,7 @@ export async function handlePiSensorDataPosting(c: Context) {
         const body = await c.req.json();
         const readings: {
             sensorUUID: string; 
+            type: 'temperature' | 'humidity';
             value: number;
             userID: string;
         }[] = body.readings;
@@ -89,10 +127,10 @@ export async function handlePiSensorDataPosting(c: Context) {
 
         // Prepare inserts
         for(const reading of readings) {
-            const { sensorUUID, value, userID: userId } = reading;
+            const { sensorUUID, type, value, userID: userId } = reading;
 
             // Skip invalid readings
-            if(!sensorUUID || value === undefined || value === null) continue;
+            if(!sensorUUID || !type || value === undefined || value === null) continue;
 
             // Find the sensor in the database
             const sensorRecords = await db.select()
@@ -111,8 +149,7 @@ export async function handlePiSensorDataPosting(c: Context) {
             // Push a record to the pings table matching the sensorId passed
             inserts.push({
                 userId: userId || null,
-                sensorId: sensorRecord.sensorId,
-                confirmed: "yes",
+                type: type,
                 value: value.toString(),
             });
         }

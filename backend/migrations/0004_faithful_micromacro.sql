@@ -1,0 +1,1 @@
+ALTER TABLE `plantInventory` ADD `quantity` integer;

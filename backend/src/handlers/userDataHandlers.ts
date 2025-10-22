@@ -19,23 +19,18 @@ export async function handleReturnUserDataByTable(c: Context, bearer: string) {
 
         const db = getDB({ DB: c.env.DB });
 
-        // TODO: quick fix was done for prototype #2. 
-        // Add a user-specific route for user table
         let rows;
         if(tableName === "user") {
             rows = await db.select()
                 .from(table)
-                .where(eq(table.id, userId)).all();
+                .where(eq(table.id, userId))
+                .all();
         } else {
             rows = await db.select()
                 .from(table)
                 .where((table as any).userId ? eq((table as any).userId, userId) : undefined)
                 .all();
         }
-        // if(!('userId' in table)) {
-        //     return c.json({ error: `Table ${tableName} does not have a userId column` }, 400)
-        // }
-        
         
         return c.json({
             success: true,

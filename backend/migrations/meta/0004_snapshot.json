@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "a1113e5b-4066-4e8e-bff7-ca18f79c8892",
-  "prevId": "5dbd74b7-6db9-4a29-9c45-0dc2a7205fb8",
+  "id": "cf326719-6cdf-409e-8faf-8c084855e935",
+  "prevId": "a1113e5b-4066-4e8e-bff7-ca18f79c8892",
   "tables": {
     "alert": {
       "name": "alert",
@@ -390,6 +390,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },
