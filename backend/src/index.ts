@@ -44,16 +44,22 @@
 import { Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
-import { verifyFirebaseToken } from './handlers/firebaseAuth';
 import { handleGetTableEntries } from './handlers/getTableEntries';
 import * as schema from './schema';
 import { handleAddTableEntry } from './handlers/addTableEntry';
+import { getDB } from './handlers/databaseQueries';
 import { emailDistributionHandler } from "./workers/emailDistributionWorker/emailDistributionWorker";
+import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
+import { handleLogin } from './handlers/handleLogin';
+import { handleRaspiPairing } from './handlers/handleRaspiPairing';
+import { handlePiMacDataRetrieval, handlePiSensorDataPosting } from './handlers/raspiHandlers';
+import { handleReturnUserDataByTable } from './handlers/userDataHandlers';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
 	FIREBASE_PROJECT_ID: string;
 	FIREBASE_API_KEY: string;
+	ENV_NAME: string;
 	DB: D1Database;
 }
 
@@ -68,28 +74,106 @@ const app = new Hono<{ Bindings: Env }>();
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
 
+/**
+ * Created by Drew on 10.20
+ * 
+ * Take a user and pair a Raspberry Pi (by mac address) to their account
+ */
+app.post('api/auth/pairDevice', async (c) => {
+	try {
+		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
+		const { raspiMac, firstName, lastName } = await c.req.json();
+
+		const rawMac = raspiMac.toString();
+		if(!rawMac) {
+			return c.json({ error: "Missing raspiMac in request body" }, 400);
+		}
+
+		const db = getDB({ DB: c.env.DB });
+		
+		const result = await handleRaspiPairing(
+			db,
+			decoded.uid,
+			decoded.email!,
+			rawMac,
+			firstName,
+			lastName
+		);
+
+		return c.json(result, 200);
+	} catch(error) {
+		console.error("[pairDevice] Error:", error);
+		return c.json({ error: (error as Error).message }, 500);
+	}
+});
+
+/**
+ * Created by Drew on 10.18
+ * 
+ * User signs in with Firebase and sends their ID token.
+ * We verify it, get UID, and store/update their info in D1.
+ */
+app.post('/api/auth/login', async (c) => {
+	try {
+		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
+		const db = getDB({ DB: c.env.DB });
+
+		// Parse first/last name from request body
+		const { firstName, lastName } = await c.req.json();
+
+		const result = await handleLogin(
+			db, 
+			decoded.uid, 
+			decoded.email!, 
+			firstName, 
+			lastName
+		);
+
+		return c.json({
+			message: 'Login successful',
+			user: result.userRecord
+		}, 200);
+	} catch(error) {
+		console.error('Error in /api/auth/login:', error);
+		return c.json({ error: (error as Error).message }, 400);
+	}
+});
+
 // Require all API routes below this declaration to use a Firebase auth token
 app.use('/api/*', async (c, next) => {
-	const authHeader = c.req.header('Authorization');
-	if (!authHeader?.startsWith('Bearer ')) {
-		return c.json({ error: 'Missing or malformed token' }, 401);
+	try {
+		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
+		c.set('userId', decoded.uid);
+		return next();
+	} catch(error) {
+		return c.json({ error: (error as Error).message }, 401);
 	}
-
-	const token = authHeader.split(' ')[1];
-	const decoded = await verifyFirebaseToken(token, c.env.FIREBASE_API_KEY);
-
-	console.log("Manual verification result:", decoded);
-
-	if (!decoded) {
-		return c.json({ error: 'Invalid or expired token' }, 401);
-	}
-
-	c.set('userId', decoded.uid); 
-	return next();
 });
+
 // === All private API routes (require Firebase auth token) go below this line ===
 
+/**
+ * Created by Drew on 10.20
+ */
+app.post('api/raspi/sensorReadings', async(c) => {
+	return await handlePiSensorDataPosting(c);
+});
 
+/**
+ * Created by Drew on 10.20
+ */
+app.get('api/raspi/:mac', async(c) => {
+	return await handlePiMacDataRetrieval(c);
+});
+
+
+/**
+ * Created by Drew on 10.20
+ */
+app.get('api/user/:table', async(c) => {
+	const bearer = c.req.header('Authorization') || '';
+	return await handleReturnUserDataByTable(c, bearer);
+});
 
 // === All private API routes (require Firebase auth token) go below this line ===
 

@@ -7,6 +7,7 @@
 	"name": "backend",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-09-11",
+	"compatibility_flags": ["nodejs_compat"],
 	"vars": {
 		"FIREBASE_PROJECT_ID": "agrogo-c4f0e",
 		 "FIREBASE_API_KEY": "AIzaSyD5H47l8jzAJeve392CLEPPRVWFad40KJE"
@@ -31,7 +32,7 @@
 		{
 			"binding": "DB",
 			"database_name": "agrogo-db",
-			"database_id": ""// Add database's UUID here. DO NOT COMMIT!!!!! - Drew
+			"database_id": "5d3b1ef9-d667-4e38-a3d3-20785849eb15"// Add database's UUID here. DO NOT COMMIT!!!!! - Drew
 		}
 	],
 	"observability": {

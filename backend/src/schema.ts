@@ -18,7 +18,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
  * Users Table
@@ -30,10 +30,11 @@ export const user = sqliteTable("user",{
     // TODO: use firebase UID
     id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-    location: text("location").notNull(),
+    location: text("location"),
     email: text("email").notNull(),
-    firstName: text("first_name").notNull(),
-    lastName: text("last_name").notNull()
+    firstName: text("first_name"),
+    lastName: text("last_name"),
+    raspiMac: text("raspi_mac")
 });
 
 /** 
@@ -83,6 +84,7 @@ export const pings = sqliteTable("pings",{
     sensorId: text("sensorId").references(() => sensors.sensorId), // make sure it's the right sensor
     confirmed: text("confirmed", { enum: pingsConfirmedEnum }).notNull(), // device still connected or not
     time: text("confirmed_at").default(sql`CURRENT_TIMESTAMP`).notNull(), // time of confirmation
+    value: text("value")
 });
 
 export const waterSchedule = sqliteTable("waterSchedule",{
@@ -90,6 +92,7 @@ export const waterSchedule = sqliteTable("waterSchedule",{
     userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are connected with user account, but leaving it here for now)
     sensorId: text("sensorId").references(() => sensors.sensorId), // make sure it's the right sensor
     time: text("scheduled_time").notNull(), // scheduled time
+    duration: text("duration")
 });
 
 export const fanSchedule = sqliteTable("fanSchedule",{
@@ -161,4 +164,3 @@ export const plantInventory = sqliteTable("plantInventory", {
     plantName: text("plant_name"),
     zoneId: text("zone_id").notNull().references(() => zone.id)
 });
-

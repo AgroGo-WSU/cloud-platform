@@ -15,6 +15,23 @@ interface FirebaseAccountsLookupResponse {
   }>;
 }
 
+export async function requireFirebaseHeader(c: any, firebaseAPIKey: string) {
+  const authHeader = c.req.header('Authorization');
+
+  if(!authHeader?.startsWith('Bearer ')) {
+    throw new Error('Missing or malformed Authorization header');
+  }
+
+  const token = authHeader.split(' ')[1];
+  const decoded = await verifyFirebaseToken(token, firebaseAPIKey);
+
+  if(!decoded) {
+    throw new Error('Invalid or expired Firebase token');
+  }
+
+  return decoded;
+}
+
 /**
  * Verifies a Firebase ID token by sending a lookup request to the Firebase Identity Toolkit API.
  *

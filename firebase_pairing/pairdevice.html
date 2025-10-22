@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Pair Raspberry Pi - AgroGo</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Raspberry Pi</h1>
+            <p id="desc">Sign in to pair the device.</p>
+
+            <div id="auth-ui">
+                <button id="btn-google">Sign in with Google</button>
+                <button id="btn-github">Sign in with Github</button>
+                <hr/>
+                <div>
+                    <input id="email" placeholder="Email" />
+                    <input id="password" placeholder="Password" type="password" />
+                    <button id="btn-email-signin">Sign in</button>
+                </div>
+            </div>
+
+            <div id="status"></div>
+            <pre id="result"></pre>
+        </div>
+
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+            import {
+                getAuth,
+                GoogleAuthProvider,
+                GithubAuthProvider,
+                signInWithPopup,
+                signInWithEmailAndPassword,
+                createUserWithEmailAndPassword,
+                onAuthStateChanged
+            } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyD5H47l8jzAJeve392CLEPPRVWFad40KJE",
+                authDomain: "agrogo-c4f0e.firebaseapp.com",
+                projectId: "agrogo-c4f0e",
+                storageBucket: "agrogo-c4f0e.firebasestorage.app",
+                messagingSenderId: "811174867409",
+                appId: "1:811174867409:web:165003e239e8e0cc11f0f0"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+
+            // Helpers
+            const $ = id => document.getElementById(id);
+            const setStatus = s => { $('status').textContent = s; }
+
+            // Read mac from query param
+            const params = new URLSearchParams(window.location.search);
+            const raspiMac = params.get('mac') || params.get('raspi_mac') || params.get('raspi');
+
+            if(!raspiMac) {
+                setStatus('No device identifier found in URL. Please open the QR from the device.');
+            } else {
+                setStatus(`Ready to pair device: ${raspiMac}`);
+            }
+
+            // UI Event Handlers
+            $('btn-google').onclick = async () => {
+                const provider = new GoogleAuthProvider();
+                try {
+                    await signInWithPopup(auth, provider);
+                } catch(e) {
+                    console.error(e);
+                    setStatus('Sign in failed');
+                }
+            };
+
+            $('btn-github').onclick = async () => {
+                const provider = new GithubAuthProvider();
+                try {
+                    await signInWithPopup(auth, provider);
+                } catch(e) {
+                    console.error(e);
+                    setStatus('Sign in failed');
+                }
+            }
+
+            $('btn-email-signin').onclick = async () => {
+                const email = $('email').value.trim();
+                const password = $('password').value;
+
+                if(!email || !password) {
+                    setStatus('Enter email and password');
+                }
+
+                // try sign in, if fail create account
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } catch(err) {
+                    try {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    } catch(err2){
+                    console.error(err2);
+                    setStatus('Email auth failed');
+                    }
+                }
+            };
+
+            // After auth, get token and call pairing endpoint
+            onAuthStateChanged(auth, async (user) => {
+                if(!user) return;
+                setStatus(`Signed in as ${user.email}, pairing...`);
+
+                const idToken = await user.getIdToken();
+
+                // Call backend with token and mac
+                if(!raspiMac) {
+                    setStatus('No Pi to pair');
+                    return;
+                }
+
+                try {
+                    const res = await fetch('https://api.agrogo.org/api/auth/pairDevice', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${idToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            raspiMac,
+                            firstName: user.displayName?.split(' ')[0],
+                            lastName: user.displayName?.split(' ')[1]
+                        })
+                    });
+
+                    const data = await res.json();
+                    $('result').textContent = JSON.stringify(data, null, 2);
+                    if(res.ok) setStatus('Pairing successful!');
+                    else setStatus('Pairing failed: ' + (data?.error || res.status));
+                } catch(e) {
+                    console.error(e);
+                    setStatus('Pairing error: '+ e.message);
+                }
+            });
+        </script>
+    </body>
+</html>
