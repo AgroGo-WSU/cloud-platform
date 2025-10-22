@@ -25,7 +25,7 @@
 import { Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
-import { getDB, createZone, createUser } from './handlers/databaseQueries';
+import { getDB, createZone } from './handlers/databaseQueries';
 import { StreamingObject } from './objects/streamingObject/StreamingObject';
 import { emailDistributionHandler } from "./workers/emailDistributionWorker/emailDistributionWorker";
 import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
