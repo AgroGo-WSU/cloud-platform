@@ -48,7 +48,7 @@ import { handleGetTableEntries } from './handlers/getTableEntries';
 import * as schema from './schema';
 import { handleAddTableEntry } from './handlers/addTableEntry';
 import { getDB } from './handlers/databaseQueries';
-import { emailDistributionHandler } from "./workers/emailDistributionWorker/emailDistributionWorker";
+import { emailDistributionHandler } from "./handlers/handleEmailDistribution";
 import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
 import { handleLogin } from './handlers/handleLogin';
 import { handleRaspiPairing } from './handlers/handleRaspiPairing';
@@ -241,7 +241,7 @@ app.post('/api/data/waterLog', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.waterLog, c,
-		{ userId: body.userId, schedule_instance: body.schedule_instance, timeOnConfirm: body.timeOnConfirm, timeOffConfirm: body.timeOffConfirm }
+		{ userId: body.userId, schedule_instance: body.schedule_instance, timeOnConfirm: body.timeOnConfirm, timeConfirmed: body.timeConfirmed }
 	);
 });
 
@@ -264,7 +264,7 @@ app.post('/api/data/rasPi', async (c) => {
 app.post('/api/data/alert', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
-		schema.rasPi, c,
+		schema.alert, c,
 		{ userId: body.userId, message: body.message, severity: body.severity, status: body.status }
 	);
 });
