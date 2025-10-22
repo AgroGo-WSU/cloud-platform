@@ -169,24 +169,3 @@ export async function createZone(db: DB, userId: string, zoneName: string): Prom
     await db.insert(schema.zone).values(newZone);
     return newZone.id;
 }
-
-
-/**
- * Find a device ID by name or UUID. If not found, insert a new row.
- * 
- * @param db - The database client
- * @param deviceId - The device ID whose readings should be fetched
- * @param limit - The maximum records to return (default: 10)
- * @returns A list of recent device readings ordered by received timestamp
- * 
- * Drew 9.22 Created method
- * updated 10.2 -nick
- */
-// export async function getRecentReadings(db: DB, zoneId: string, limit = 10) {
-//     return db
-//         .select()
-//         .from(schema.deviceReadings)
-//         .where(eq(schema.deviceReadings.zoneId, zoneId))
-//         .orderBy(desc(schema.deviceReadings.receivedAt))
-//         .limit(limit)
-// }

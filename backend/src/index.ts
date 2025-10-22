@@ -44,12 +44,10 @@
 import { Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
-import { verifyFirebaseToken } from './handlers/firebaseAuth';
 import { handleGetTableEntries } from './handlers/getTableEntries';
 import * as schema from './schema';
 import { handleAddTableEntry } from './handlers/addTableEntry';
-import { getDB, createZone } from './handlers/databaseQueries';
-import { StreamingObject } from './objects/streamingObject/StreamingObject';
+import { getDB } from './handlers/databaseQueries';
 import { emailDistributionHandler } from "./workers/emailDistributionWorker/emailDistributionWorker";
 import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
 import { handleLogin } from './handlers/handleLogin';
