@@ -17,8 +17,8 @@
  * - plant: User-managed plants linked to zones.
  */
 
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
  * Users Table
@@ -27,7 +27,8 @@ import { sql } from "drizzle-orm";
  * table added by nick 10.2
  */
 export const user = sqliteTable("user",{
-    id: text("id").primaryKey(),
+    // TODO: use firebase UID
+    id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
     location: text("location"),
     email: text("email").notNull(),

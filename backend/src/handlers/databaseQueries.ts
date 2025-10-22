@@ -87,7 +87,8 @@ export async function returnTableEntries<T extends Table>(
  */
 export async function createUser(
     db: DB, 
-    userId: string, 
+    userId: string,
+    location: string, 
     email: string,
     firstName: string,
     lastName: string
@@ -101,6 +102,7 @@ export async function createUser(
     await db.insert(schema.user).values({ 
         id: userId, 
         email: email,
+        location: location,
         firstName: firstName,
         lastName: lastName
     });
@@ -166,20 +168,4 @@ export async function createZone(db: DB, userId: string, zoneName: string): Prom
     };
     await db.insert(schema.zone).values(newZone);
     return newZone.id;
-}
-
-
-/**
- * Find a device ID by name or UUID. If not found, insert a new row.
- * 
- * @param db - The database client
- * @param deviceId - The device ID whose readings should be fetched
- * @param limit - The maximum records to return (default: 10)
- * @returns A list of recent device readings ordered by received timestamp
- * 
- * Drew 9.22 Created method
- * updated 10.2 -nick
- */
-export async function getRecentReadings(db: DB, zoneId: string, limit = 10) {
-    return null
 }

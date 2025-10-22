@@ -9,8 +9,99 @@ For API routes, AgroGo uses Cloudflare workers which are exposed to traditional 
 All API routes require the use of a Firebase-provided JWT. This ensures that the data is only coming from officially authenticated sources. All API calls _must_ have the following header:
 - `Authorization: Bearer <firebase JWT>`
 
-### `/api/data/<table name>`
-This route handles all database queries. The route will take incoming HTTP information and translate it into SQL queries (via the use of Drizzle ORM) that can be used to manipulate the database. This route is important because it ensures that the data is entering the database in the correct format, and from the correct actors.
+### `/api/auth/login`
+This route allows us to enhance Firebase Auth's database. It should be called after a user signs in. It will take the following data from Firebase Auth:
+- uid
+- email
+- first name
+- last name
+
+And will write that data to our D1 database. In our D1 database, there is a field for a Raspberry Pi's MAC address. This will remain blank on initial login, but can be filled in by the route `/api/auth/pairDevice`
+
+#### POST Request
+- Retrieves the currently authenticated user's Firebase information by use of the Bearer token (passed in the `Authorization` header).
+- Sends the user's Firebase information to our D1 database.
+- Leaves the `raspi_mac` field empty to be filled in later.
+
+**Example Request:** (adds a new user from a firebase account)
+```
+POST <base url>/api/auth/login
+Authoriation: Bearer <firebase JWT>
+Content-Type: application/json
+{
+  "firstName": "Drew",
+  "lastName": "Adomaitis"
+}
+```
+
+### `/api/auth/pairDevice`
+This route handles pairing a Raspberry Pi device (by MAC address) to a user's account.
+It should be called after a user logs in and when the Raspberry Pi device is ready to be linked to that user.
+Once paired, the Pi will be associated with the user in the D1 database, allowing the system to fetch/store sensor readings related to that device.
+
+#### POST Request
+- Accepts a JSON body containing the following fields:
+  - `raspiMac`: The MAC address of the Raspberry Pi (string)
+  - (optional) `firstName`: The user's first name (string)
+  - (optional) `lastName`: The user's last name (string)
+- Writes the device's MAC address to the user's record in the D1 database
+- Uses the Firebase Bearer token to decode the user's Firebase Uid and retrieve their information in D1.
+- Returns confirmation of the pairing, along with relevant user and device data.
+
+**Example Request:**
+
+```
+POST <base url>/api/auth/pairDevice
+Authorization: Bearer <firebase JWT>
+Content-Type: application/json
+{
+  "raspiMac": "B8:27:EB:45:12:9F"
+}
+```
+
+### `/api/raspi/sensorReadings`
+_TODO: Use the MAC address and remove bearer token on Pi tonight_
+
+This api route handles the communication of sensor readings from Raspberry Pi devices to D1.
+It requires that a Raspberry Pi is paired to a user via the `api/auth/pairDevice` route.
+When the Pi collects sensor data, it sends readings through this endpoint, where they are validated and written to the `pings` table in D1
+
+#### POST Request
+- Accepts a JSON body containing an array of sensor readings.
+- Each reading object must contain:
+  - `sensorUUID`: The unique ID of the sensor (string)
+  - `value`: The numeric reading captured from the sensor (number)
+  - `userID`: The Firebase UID of the user associated with the device (string)
+
+Each reading is validated against the `sensors` table to ensure the sensor exists before inserting data into the `pings` table.
+
+If no valid readings are found, the request will return a `400 Bad Request` error.
+If successful, the route returns a confirmation message along with the count of inserted readings.
+
+**Example Request**
+
+```
+POST <base url>/api/raspi/sensorReadings
+Authorization: Bearer <firebase JWT>
+Content-Type: application/json
+{
+  "readings": [
+    {
+      "sensorUUID": "soil-123",
+      "value": 47.5,
+      "userID": "firebase-user-uuid-123"
+    },
+    {
+      "sensorUUID": "temp-456",
+      "value": 22.1,
+      "userID": "firebase-user-uuid-123"
+    }
+  ]
+}
+```
+
+### `/api/data/<table name>` (inactive, being added back on the evening of 10.21 or morning of 10.22)
+This route handles all database insertion queries. The route will take incoming HTTP information and translate it into SQL queries (via the use of Drizzle ORM) that can be used to manipulate the database. This route is important because it ensures that the data is entering the database in the correct format, and from the correct actors.
 
 AgroGo has the following tables in the D1 database. All of which can be accessed using this route
 <img width="1222" height="670" alt="image" src="https://github.com/user-attachments/assets/b1b393ba-7287-46c3-a4ec-18a1490092e3" />
@@ -19,7 +110,8 @@ AgroGo has the following tables in the D1 database. All of which can be accessed
 - Inserts a new entry into a specified table.
 - Uses the `json` section to specify data on each field.
 - Performs a validation to ensure that an entry isn't created without needed data.
-- Example query: (adds a new line in the User table with the following values: location = Detroit, email = adomaitisandrew@gmail.com, firstName = Drew, lastName = Adomaitis
+
+**Example Request:** (adds a new line in the User table with the following values: location = Detroit, email = adomaitisandrew@gmail.com, firstName = Drew, lastName = Adomaitis
 ```
 POST <base url>/api/data/user
 Authorization: Bearer <firebase JWT>
@@ -32,17 +124,6 @@ Content-Type: application/json
 }
 ```
 
-#### GET Request
-- Returns an amount of entries from a specified table.
-- If no specified amount is given, defaults to 100 entries.
-- Uses query params at the end of the url to take in filtering parameters on the table.
-- Example query: (returns the last 5 users with the first name "Drew")
-```
-GET <base url>/api/data/user?firstName=Drew&limit=5
-Authorization: Bearer <firebase JWT>
-Content-Type: application/json
-```
-
 ### `/api/sendEmail`
 Communicates with the Resend API to distribute an email.
 
@@ -51,7 +132,8 @@ Emails must originate from an email from the domain agrogo.org.
 #### POST Request
 - Pushes an incoming email request to Resend for distribution.
 - Uses the `json` section to specify email contents, recipient, and sender.
-- Example query: (distributes an email to the email address 
+
+**Example Request:** (distributes an email to the email address sent in recipient)
 ```
 POST <base url>/api/sendEmail
 Authorization: Bearer <firebase JWT>
