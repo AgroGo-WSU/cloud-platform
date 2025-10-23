@@ -88,7 +88,8 @@ export const pings = sqliteTable("pings",{
 });
 
 export const waterSchedule = sqliteTable("waterSchedule",{
-    id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // to id the instance 
+    id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // to id the instance
+    type: text("type"),
     userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are connected with user account, but leaving it here for now)
     sensorId: text("sensorId").references(() => sensors.sensorId), // make sure it's the right sensor
     time: text("scheduled_time").notNull(), // scheduled time

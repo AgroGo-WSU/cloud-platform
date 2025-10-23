@@ -52,7 +52,7 @@ import { emailDistributionHandler } from "./handlers/handleEmailDistribution";
 import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
 import { handleLogin } from './handlers/handleLogin';
 import { handleRaspiPairing } from './handlers/handleRaspiPairing';
-import { handlePiMacDataRetrieval, handlePiPairingStatus, handlePiSensorDataPosting } from './handlers/raspiHandlers';
+import { handlePiPairingStatus, returnPinActionTable } from './handlers/raspiHandlers';
 import { handleReturnUserDataByTable } from './handlers/userDataHandlers';
 
 export interface Env {
@@ -74,13 +74,6 @@ const app = new Hono<{ Bindings: Env }>();
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
 
-/**
- * Created by Drew on 10.20
- */
-app.get('api/raspi/:mac', async(c) => {
-	return await handlePiMacDataRetrieval(c);
-});
-
 app.get('api/raspi/pairingStatus', async(c) => {
 	return await handlePiPairingStatus(c);
 });
@@ -88,8 +81,8 @@ app.get('api/raspi/pairingStatus', async(c) => {
 /**
  * Created by Drew on 10.20
  */
-app.post('api/raspi/sensorReadings', async(c) => {
-	return await handlePiSensorDataPosting(c);
+app.get('api/raspi/:mac/pinActionTable', async(c) => {
+	return await returnPinActionTable(c);
 });
 
 /**
@@ -174,14 +167,7 @@ app.use('/api/*', async (c, next) => {
  * Created by Drew on 10.20
  */
 app.post('api/raspi/sensorReadings', async(c) => {
-	return await handlePiSensorDataPosting(c);
-});
-
-/**
- * Created by Drew on 10.20
- */
-app.get('api/raspi/:mac', async(c) => {
-	return await handlePiMacDataRetrieval(c);
+	return await returnPinActionTable(c);
 });
 
 /**
