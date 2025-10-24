@@ -48,11 +48,14 @@ import { handleGetTableEntries } from './handlers/getTableEntries';
 import * as schema from './schema';
 import { handleAddTableEntry } from './handlers/addTableEntry';
 import { getDB } from './handlers/databaseQueries';
-import { emailDistributionHandler } from "./handlers/handleEmailDistribution";
+import { emailDistributionHandler, handleSendEmail } from "./handlers/handleEmailDistribution";
 import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
 import { handleLogin } from './handlers/handleLogin';
-import { handleRaspiPairing } from './handlers/handleRaspiPairing';
-import { handlePiPairingStatus, returnPinActionTable } from './handlers/raspiHandlers';
+import { 
+	handlePiPairingStatus, 
+	returnPinActionTable, 
+	handleRaspiPairing 
+} from './handlers/raspiHandlers';
 import { handleReturnUserDataByTable } from './handlers/userDataHandlers';
 
 export interface Env {
@@ -91,31 +94,7 @@ app.get('api/raspi/:mac/pinActionTable', async(c) => {
  * Take a user and pair a Raspberry Pi (by mac address) to their account
  */
 app.post('api/auth/pairDevice', async (c) => {
-	try {
-		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
-		const { raspiMac, firstName, lastName } = await c.req.json();
-
-		const rawMac = raspiMac.toString();
-		if(!rawMac) {
-			return c.json({ error: "Missing raspiMac in request body" }, 400);
-		}
-
-		const db = getDB({ DB: c.env.DB });
-		
-		const result = await handleRaspiPairing(
-			db,
-			decoded.uid,
-			decoded.email!,
-			rawMac,
-			firstName,
-			lastName
-		);
-
-		return c.json(result, 200);
-	} catch(error) {
-		console.error("[pairDevice] Error:", error);
-		return c.json({ error: (error as Error).message }, 500);
-	}
+	return await handleRaspiPairing(c);
 });
 
 /**
@@ -124,30 +103,8 @@ app.post('api/auth/pairDevice', async (c) => {
  * User signs in with Firebase and sends their ID token.
  * We verify it, get UID, and store/update their info in D1.
  */
-app.post('/api/auth/login', async (c) => {
-	try {
-		const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
-		const db = getDB({ DB: c.env.DB });
-
-		// Parse first/last name from request body
-		const { firstName, lastName } = await c.req.json();
-
-		const result = await handleLogin(
-			db, 
-			decoded.uid, 
-			decoded.email!, 
-			firstName, 
-			lastName
-		);
-
-		return c.json({
-			message: 'Login successful',
-			user: result.userRecord
-		}, 200);
-	} catch(error) {
-		console.error('Error in /api/auth/login:', error);
-		return c.json({ error: (error as Error).message }, 400);
-	}
+app.post('/api/auth/login', async(c) => {
+	return await handleLogin(c);
 });
 
 // Require all API routes below this declaration to use a Firebase auth token
@@ -174,8 +131,7 @@ app.post('api/raspi/sensorReadings', async(c) => {
  * Created by Drew on 10.20
  */
 app.get('api/user/:table', async(c) => {
-	const bearer = c.req.header('Authorization') || '';
-	return await handleReturnUserDataByTable(c, bearer);
+	return await handleReturnUserDataByTable(c);
 });
 
 
@@ -295,14 +251,7 @@ app.post('/api/data/plantInventory', async (c) => {
  * Returns entries in a table based on params passed by the request
  */
 app.get('api/data/:table', async (c) => {
-	// Find the table's name that was passed
-	const tableName = c.req.param('table');
-
-	// Check if the table exists in the schema
-	const table = (schema as Record<string, any>)[tableName];
-	if(!table) return c.json({ error: `Table ${tableName} not found`}, 404);
-
-	return handleGetTableEntries(table, c);
+	return handleGetTableEntries(c);
 });
 
 /**
@@ -311,32 +260,7 @@ app.get('api/data/:table', async (c) => {
  * Created by Drew on 10.4
  */
 app.post('/api/sendEmail', async (c) => {
-	try {
-		// Parse the incoming request body
-		const { recipient, subject, message, sender } = await c.req.json();
-
-		// Input validation, sender is optional
-		if(!recipient || !subject || !message) {
-			return new Response("Missing one of the required fields: recipient, subject, or message", {
-				status: 400,
-			});
-		}
-
-		// Call the email handler
-		return await emailDistributionHandler.fetch(
-			c.req.raw,
-			c.env,
-			recipient,
-			subject,
-			message,
-			sender || "no-reply@agrogo.org" // Default sender
-		);
-	} catch(error) {
-		console.error("Error in /api/sendEmail:", error);
-		return new Response(`Error sending email: ${(error as Error).message}`, { 
-			status: 500
-		});
-	}
+	handleSendEmail(c);
 });
 
 export default app;

@@ -3,8 +3,44 @@ import * as schema from '../schema';
 import { getDB } from './databaseQueries';
 import { eq } from 'drizzle-orm';
 
-export async function handleReturnUserDataByTable(c: Context, bearer: string) {
+/**
+ * Retrieves all records from a specified database table associated with the authenticated user.
+ *
+ * This endpoint dynamically queries a table within the database schema based on the `table` route parameter.
+ * It uses the authenticated user's ID (retrieved from the request context) to filter results.
+ * If the requested table is `"user"`, it fetches only that user's record; otherwise, it selects
+ * all records associated with the user's ID via a `userId` field.
+ *
+ * The function validates that the table exists within the schema and that the user is authenticated
+ * before executing the query. Results are returned as a JSON response including metadata such as
+ * table name and row count.
+ *
+ * @async
+ * @function handleReturnUserDataByTable
+ * @param {Context} c - The Hono context object containing the HTTP request, environment bindings, and user session data.
+ * @returns {Promise<Response>} A JSON response containing:
+ * - `{ success: true, table, count, data }` on success, or
+ * - `{ error: string }` with an appropriate status code on failure.
+ *
+ * @throws {Error} If authentication fails, the table name is invalid, or database access encounters an error.
+ *
+ * @example
+ * // Example successful response:
+ * {
+ *   "success": true,
+ *   "table": "waterSchedule",
+ *   "count": 3,
+ *   "data": [
+ *     { "id": 1, "userId": "abc123", "time": "07:00", "duration": 600 },
+ *     { "id": 2, "userId": "abc123", "time": "08:00", "duration": 600 },
+ *     { "id": 3, "userId": "abc123", "time": "09:00", "duration": 600 }
+ *   ]
+ * }
+ */
+export async function handleReturnUserDataByTable(c: Context) {
     try {
+        const bearer = c.req.header('Authorization') || '';
+
         // Decode user data using the bearer key
         const userId = c.get('userId');
 

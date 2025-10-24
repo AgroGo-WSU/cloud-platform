@@ -1,8 +1,126 @@
 import { getDB } from "./databaseQueries";
 import * as schema from '../schema';
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { Context } from "hono";
+import { handleLogin } from "./handleLogin";
+import type { DB } from "./databaseQueries";
+import { requireFirebaseHeader } from "./authHandlers";
 
+/**
+ * Helper: normalize MAC string to canonical lower-case colon-separated format
+ * - Accepts formats like "AA:BB:CC:DD:EE:FF", "aabbccddeeff", "AA-BB-..." etc.
+ * - Returns null if input doesn't look like 12 hex digits.
+ */
+export function normalizeMac(raw?: string | null): string | null {
+    if(!raw) return null;
+
+    // Convert input to lowercase and remove any character that isn't (0-9 or a-f)
+    const hex = raw.toLowerCase().replace(/[^0-9a-f]/g, '');
+    if(hex.length !== 12) return null;
+
+    // Format as a proper Mac Address
+    // i.e. aabbccddeeff --> aa:bb:cc:dd:ee:ff
+    return hex.match(/.{2}/g)!.join(":");
+}
+
+/**
+ * Handles pairing of a Raspberry Pi device with a user's account.
+ *
+ * This function verifies the user's Firebase authentication token, normalizes and validates
+ * the provided Raspberry Pi MAC address, ensures the user exists in the database (creating one
+ * if necessary), and updates the user record to include the associated device MAC address.
+ * 
+ * It returns the updated user record upon success or an error response upon failure.
+ *
+ * @async
+ * @function handleRaspiPairing
+ * @param {Context} c - The Hono context object containing the request, environment variables, and response helpers.
+ * @returns {Promise<Response>} A JSON response containing the updated user record on success,
+ * or an error object with an appropriate HTTP status code on failure.
+ *
+ * @throws {Error} If the Firebase authentication fails, the MAC address is missing or invalid,
+ * the user record cannot be created or updated, or database operations fail.
+ */
+export async function handleRaspiPairing(c: Context) {
+    try {
+        const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
+        const { raspiMac, firstName, lastName } = await c.req.json();
+
+        const rawMac = raspiMac.toString();
+        if(!rawMac) {
+            return c.json({ error: "Missing raspiMac in request body" }, 400);
+        }
+
+        const db = getDB({ DB: c.env.DB });
+
+
+            const normalizedMac = normalizeMac(rawMac);
+            if(!normalizedMac) {
+                throw new Error("Invalid raspi_mac format. Expected 12 hex digits");
+            }
+        
+            // Ensure user exists
+            // TODO: fix before deploying to wrangler
+            await handleLogin(db, decoded.uid, decoded.email!, firstName ?? "", lastName ?? "");
+        
+            // Update raspi_mac field
+            await db
+                .update(schema.user)
+                .set({ raspiMac: normalizedMac })
+                .where(eq(schema.user.id, decoded.uid))
+                .run();
+            
+            // Fetch and return updated record
+            const [user] = await db
+                .select()
+                .from(schema.user)
+                .where(eq(schema.user.id, decoded.uid))
+                .all();
+            
+            if(!user) {
+                throw new Error("Failed to fetch updated user record");
+            }
+            
+
+        return c.json(user, 200);
+    } catch(error) {
+        console.error("[pairDevice] Error:", error);
+        return c.json({ error: (error as Error).message }, 500);
+    }
+}
+
+/**
+ * Generates and returns a pin action schedule table for a Raspberry Pi device based on the user’s saved settings.
+ *
+ * This endpoint is called by a Raspberry Pi to retrieve its action schedule, using the device's MAC address
+ * to identify the associated user. It queries the database for that user’s fan and water schedules, maps each
+ * schedule to a corresponding GPIO pin, and returns a structured table of pin actions (including activation
+ * times and durations).
+ *
+ * The function assumes that each user has exactly one fan schedule and three water schedules, corresponding
+ * to specific GPIO pins.
+ *
+ * @async
+ * @function returnPinActionTable
+ * @param {Context} c - The Hono context object containing the HTTP request, environment bindings, and response helpers.
+ * @returns {Promise<Response>} A JSON response containing:
+ * - `success: true` and a `data` array of pin action objects if successful.
+ * - `{ error: string }` with a 4xx or 5xx status code on failure.
+ *
+ * @throws {Error} If the MAC address is missing or invalid, no associated user is found, or database queries fail.
+ *
+ * @example
+ * // Example successful response:
+ * {
+ *   "success": true,
+ *   "data": [
+ *     { "type": "fan", "pin": 17, "time": "06:00", "duration": 1200 },
+ *     { "type": "water1", "pin": 27, "time": "07:00", "duration": 600 },
+ *     { "type": "water2", "pin": 22, "time": "08:00", "duration": 600 },
+ *     { "type": "water3", "pin": 23, "time": "09:00", "duration": 600 }
+ *   ]
+ * }
+ */
 export async function returnPinActionTable(c: Context) {
 
     // Raspberry Pi has devices attached to each separate pin.

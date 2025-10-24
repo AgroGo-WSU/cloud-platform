@@ -1,4 +1,51 @@
+import { Context } from "hono";
+
 export type ResendResponse = { id: string };
+
+/**
+ * Handles an HTTP request to send an email through the email distribution handler.
+ *
+ * This function parses the incoming JSON request body for `recipient`, `subject`, and `message`
+ * fields (with an optional `sender`). It validates the input, and if valid, forwards the
+ * request to the `emailDistributionHandler` for delivery. If any required fields are missing,
+ * it responds with a `400 Bad Request` error. On internal failures, it returns a `500 Internal Server Error`.
+ *
+ * @async
+ * @function handleSendEmail
+ * @param {Context} c - The Hono context object containing the request, environment bindings, and response helpers.
+ * @returns {Promise<Response>} A Response object indicating success or failure of the email send operation.
+ *
+ * @throws {Error} Logs and returns an error response if email sending fails or request parsing encounters an issue.
+ */
+
+export async function handleSendEmail(c: Context) {
+    try {
+		// Parse the incoming request body
+		const { recipient, subject, message, sender } = await c.req.json();
+
+		// Input validation, sender is optional
+		if(!recipient || !subject || !message) {
+			return new Response("Missing one of the required fields: recipient, subject, or message", {
+				status: 400,
+			});
+		}
+
+		// Call the email handler
+		return await emailDistributionHandler.fetch(
+			c.req.raw,
+			c.env,
+			recipient,
+			subject,
+			message,
+			sender || "no-reply@agrogo.org" // Default sender
+		);
+	} catch(error) {
+		console.error("Error in /api/sendEmail:", error);
+		return new Response(`Error sending email: ${(error as Error).message}`, { 
+			status: 500
+		});
+	}
+}
 
 /**
  * Sends an outbound email using the Resend API.
