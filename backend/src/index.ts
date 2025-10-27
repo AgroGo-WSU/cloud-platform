@@ -19,9 +19,7 @@
  * - ./handlers/firebaseAuth            : verifyFirebaseToken used by auth middleware
  * - ./schema                          : Drizzle table definitions used to look up tables by name
  *
- * Routes summary
- * - POST /api/data/<table>        : Insert a row into a specific table (many table-specific routes wired).
- * - GET  /api/data/:table         : Generic tabular endpoint. Accepts query params as filters and `limit`.
+ * See the README to see the route descriptions in detail.
  *
  * Important notes / conventions
  * - All /api/* routes require a valid Firebase Bearer token; middleware sets `userId` on context.
@@ -54,7 +52,8 @@ import { handleLogin } from './handlers/handleLogin';
 import { 
 	handlePiPairingStatus, 
 	returnPinActionTable, 
-	handleRaspiPairing 
+	handleRaspiPairing, 
+	handlePostRaspiSensorReadings
 } from './handlers/raspiHandlers';
 import { handleReturnUserDataByTable } from './handlers/userDataHandlers';
 
@@ -77,15 +76,22 @@ const app = new Hono<{ Bindings: Env }>();
 // telling app to use CORS headers - Madeline
 app.use('*', cors());
 
-app.get('api/raspi/pairingStatus', async(c) => {
+app.get('/raspi/pairingStatus', async(c) => {
 	return await handlePiPairingStatus(c);
 });
 
 /**
  * Created by Drew on 10.20
  */
-app.get('api/raspi/:mac/pinActionTable', async(c) => {
+app.get('/raspi/:mac/pinActionTable', async(c) => {
 	return await returnPinActionTable(c);
+});
+
+/**
+ * Created by Drew on 10.20
+ */
+app.post('raspi/:mac/sensorReadings', async(c) => {
+	return await handlePostRaspiSensorReadings(c);
 });
 
 /**
@@ -119,13 +125,6 @@ app.use('/api/*', async (c, next) => {
 });
 
 // === All private API routes (require Firebase auth token) go below this line ===
-
-/**
- * Created by Drew on 10.20
- */
-app.post('api/raspi/sensorReadings', async(c) => {
-	return await returnPinActionTable(c);
-});
 
 /**
  * Created by Drew on 10.20

@@ -61,7 +61,7 @@ export async function handleRaspiPairing(c: Context) {
         
             // Ensure user exists
             // TODO: fix before deploying to wrangler
-            await handleLogin(db, decoded.uid, decoded.email!, firstName ?? "", lastName ?? "");
+            await handleLogin(c);
         
             // Update raspi_mac field
             await db
@@ -89,6 +89,54 @@ export async function handleRaspiPairing(c: Context) {
     }
 }
 
+export async function handlePostRaspiSensorReadings(c: Context) {
+    try {
+        const mac = c.req.param("mac");
+        const db = getDB({ DB: c.env.DB })
+        const body = await c.req.json();
+        const readings = body.readings; // Expect { readings: [...] }
+
+        if(!mac) return c.json({ error: "Missing MAC address" }, 400);
+
+        if(!Array.isArray(readings) || readings.length === 0) {
+            return c.json({ error: "No sensor readings provided" }, 400);
+        }
+
+        // Find the userId associated with this MAC address
+        const userId = await findUserFromMacAddress(db, mac);
+
+        // Map readings to the insert structure
+        const rowsToInsert = readings.map((r: any) => ({
+            userId: userId,
+            type: r.type,
+            value: r.value
+        }));
+
+        await db.insert(schema.tempAndHumidity).values(rowsToInsert);
+
+        return c.json({ 
+            success: true,
+            inserted: rowsToInsert.length
+        });
+
+    } catch(error) {
+        console.error("[sensorReadings] Error:", error);
+        return c.json({ error: (error as Error).message }, 500)
+    }
+}
+
+async function findUserFromMacAddress(db: DB, mac: string) {
+    // The Pi passes a MAC address, find the user associated with
+    // that address for the tempAndHumidity table's schema
+    const users = await db.select()
+        .from(schema.user)
+        .where(eq(schema.user.raspiMac, mac))
+        .all();
+        
+    // There will only be one userId associated with each MAC address
+    return users.length > 0 ? users[0].id : null;
+}
+
 /**
  * Generates and returns a pin action schedule table for a Raspberry Pi device based on the user’s saved settings.
  *
@@ -97,7 +145,7 @@ export async function handleRaspiPairing(c: Context) {
  * schedule to a corresponding GPIO pin, and returns a structured table of pin actions (including activation
  * times and durations).
  *
- * The function assumes that each user has exactly one fan schedule and three water schedules, corresponding
+ * The function assumes that each user has no more than one fan schedule and three water schedules, corresponding
  * to specific GPIO pins.
  *
  * @async
@@ -138,19 +186,7 @@ export async function returnPinActionTable(c: Context) {
 
         const db = getDB({ DB: c.env.DB });
 
-        // The Pi passes a MAC address, find the user associated with
-        // that address for the tempAndHumidity table's schema
-        const users = await db.select()
-            .from(schema.user)
-            .where(eq(schema.user.raspiMac, mac))
-            .all();
-
-        if(users.length === 0) {
-            return c.json({ error: 'No user found for provided MAC address'}, 404);
-        }
-        // There will only be one userId associated with each MAC address
-        const userId = users[0]?.id;
-        
+        const userId = await findUserFromMacAddress(db, mac);
 
         // Find the schedules that the user has on their account
         const fanSchedules = await db.select()

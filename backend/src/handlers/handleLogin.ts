@@ -39,7 +39,7 @@ export async function handleLogin(c: Context) {
 		const db = getDB({ DB: c.env.DB });
 
 		// Parse first/last name from request body
-		const { firstName, lastName } = await c.req.json();
+		const { firstName, lastName, location } = await c.req.json();
 
         // Check if user already exists
         const existingUsers = await db.select()
@@ -58,11 +58,12 @@ export async function handleLogin(c: Context) {
         // Create a new user record if they don't exist
         const newUser = {
             id: decoded.uid,
-            email: decoded.email,
+            location: location,
+            email: decoded.email!,
             firstName: firstName,
             lastName: lastName,
             // Blank on login, mac is added by the pairing function after insertion
-            //raspiMac: "" 
+            raspiMac: "" 
         };
 
         await db.insert(schema.user).values(newUser).run();
