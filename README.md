@@ -60,7 +60,6 @@ Content-Type: application/json
 ```
 
 ### `/api/raspi/sensorReadings`
-_TODO: Use the MAC address and remove bearer token on Pi tonight_
 
 This api route handles the communication of sensor readings from Raspberry Pi devices to D1.
 It requires that a Raspberry Pi is paired to a user via the `api/auth/pairDevice` route.
