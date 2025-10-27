@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "19b3ca8d-121b-480d-9d0a-3d9597d80240",
-  "prevId": "670aa61a-075a-4448-85bd-475414a19e6d",
+  "id": "88e52b2c-19d7-4ec5-bb2c-eb2c0aebfc02",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "alert": {
       "name": "alert",
@@ -180,6 +180,13 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -312,6 +319,13 @@
           "notNull": true,
           "autoincrement": false,
           "default": "CURRENT_TIMESTAMP"
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -383,6 +397,20 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date_planted": {
+          "name": "date_planted",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },
@@ -534,6 +562,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "sensorId": {
+          "name": "sensorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "received_at": {
           "name": "received_at",
           "type": "text",
@@ -558,6 +593,19 @@
           "tableTo": "user",
           "columnsFrom": [
             "userID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tempAndHumidity_sensorId_sensors_id_fk": {
+          "name": "tempAndHumidity_sensorId_sensors_id_fk",
+          "tableFrom": "tempAndHumidity",
+          "tableTo": "sensors",
+          "columnsFrom": [
+            "sensorId"
           ],
           "columnsTo": [
             "id"
@@ -592,7 +640,7 @@
           "name": "location",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "email": {
@@ -606,14 +654,21 @@
           "name": "first_name",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "last_name": {
           "name": "last_name",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "raspi_mac": {
+          "name": "raspi_mac",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },
@@ -706,6 +761,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "userID": {
           "name": "userID",
           "type": "text",
@@ -725,6 +787,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },
@@ -826,14 +895,8 @@
   "enums": {},
   "_meta": {
     "schemas": {},
-    "tables": {
-      "\"plant\"": "\"plantInventory\""
-    },
-    "columns": {
-      "\"fanSchedule\".\"sensorID\"": "\"fanSchedule\".\"sensorId\"",
-      "\"pings\".\"sensorID\"": "\"pings\".\"sensorId\"",
-      "\"waterSchedule\".\"sensorID\"": "\"waterSchedule\".\"sensorId\""
-    }
+    "tables": {},
+    "columns": {}
   },
   "internal": {
     "indexes": {}

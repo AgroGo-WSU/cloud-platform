@@ -28,7 +28,7 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
  */
 export const user = sqliteTable("user",{
     // TODO: use firebase UID
-    id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()),
+    id: text("id").primaryKey(),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
     location: text("location"),
     email: text("email").notNull(),
@@ -51,7 +51,7 @@ export const sensors = sqliteTable("sensors",{
 
 /**
  * Zone Table
- * -This table contains the masterlist for all of the Zones for users
+ * -This table contains the master list for all of the Zones for users
  * each time a users adds a zone to their account to monitor a uuid is created
  * and it gets associated with the users firebase id
  * table added by nick 10.2
@@ -74,6 +74,7 @@ export const tempAndHumidityTypeEnum = ['humidity', 'temperature'] as const;
 export const tempAndHumidity = sqliteTable("tempAndHumidity",{
     userId: text("userID").references(() => user.id), // reference the userID to identify the account
     type: text("type", { enum: tempAndHumidityTypeEnum }).notNull(),
+    sensorId: text("sensorId").references(() => sensors.sensorId),
     receivedAt: text("received_at").default(sql`CURRENT_TIMESTAMP`).notNull(), // timestamp for tracking
     value: text("value").notNull(), // this is the humidity percentage or temperature value
 });
@@ -102,6 +103,7 @@ export const fanSchedule = sqliteTable("fanSchedule",{
     sensorId: text("sensorId").references(() => sensors.sensorId), // make sure it's the right sensor
     timeOn: text("scheduled_time_on").notNull(), // scheduled time on
     timeOff: text("scheduled_time_off").notNull(), // scheduled time off
+    duration: text("duration")
 });
 
 export const waterLog = sqliteTable("waterLog",{ // this table is for confirming that these events happened
@@ -164,5 +166,6 @@ export const plantInventory = sqliteTable("plantInventory", {
     plantType: text("plant_type"),
     plantName: text("plant_name"),
     zoneId: text("zone_id").notNull().references(() => zone.id),
-    quantity: integer("quantity")
+    quantity: integer("quantity"),
+    datePlanted: text("date_planted")
 });

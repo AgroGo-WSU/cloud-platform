@@ -121,7 +121,7 @@ export async function handlePostRaspiSensorReadings(c: Context) {
 
     } catch(error) {
         console.error("[sensorReadings] Error:", error);
-        return c.json({ error: (error as Error).message }, 500)
+        return c.json({ error: (error as Error).message }, 500);
     }
 }
 
