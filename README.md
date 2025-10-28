@@ -17,7 +17,7 @@ Content-Type: application/json
 GET <base url>/raspi/1a:2b:3c:4d:5e:6f/pinActionTable
 ```
 
-### `/raspi/sensorReadings`
+### `/raspi/:mac/sensorReadings`
 This api route handles the communication of sensor readings from Raspberry Pi devices to D1.
 It requires that a Raspberry Pi is paired to a user via the `api/auth/pairDevice` route.
 When the Pi collects sensor data, it sends readings through this endpoint, where they are validated and written to the `pings` table in D1
