@@ -77,7 +77,7 @@ CREATE TABLE `sensors` (
 );
 --> statement-breakpoint
 CREATE TABLE `tempAndHumidity` (
-	`userID` text,
+	`userID` text NOT NULL,
 	`type` text NOT NULL,
 	`sensorId` text,
 	`received_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,

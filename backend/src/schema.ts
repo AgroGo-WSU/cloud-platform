@@ -72,7 +72,7 @@ export const zone = sqliteTable("zone", {
  */
 export const tempAndHumidityTypeEnum = ['humidity', 'temperature'] as const;
 export const tempAndHumidity = sqliteTable("tempAndHumidity",{
-    userId: text("userID").references(() => user.id), // reference the userID to identify the account
+    userId: text("userID").references(() => user.id).notNull(), // reference the userID to identify the account
     type: text("type", { enum: tempAndHumidityTypeEnum }).notNull(),
     sensorId: text("sensorId").references(() => sensors.sensorId),
     receivedAt: text("received_at").default(sql`CURRENT_TIMESTAMP`).notNull(), // timestamp for tracking

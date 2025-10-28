@@ -45,8 +45,7 @@ import { cors } from 'hono/cors';
 import { handleGetTableEntries } from './handlers/getTableEntries';
 import * as schema from './schema';
 import { handleAddTableEntry } from './handlers/addTableEntry';
-import { getDB } from './handlers/databaseQueries';
-import { emailDistributionHandler, handleSendEmail } from "./handlers/handleEmailDistribution";
+import { handleSendEmail } from "./handlers/handleEmailDistribution";
 import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
 import { handleLogin } from './handlers/handleLogin';
 import { 
@@ -142,7 +141,7 @@ app.post('api/data/user', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.user, c,
-		{ location: body.location, email: body.email, firstName: body.firstName, lastName: body.lastName }
+		{ id: body.id, location: body.location, email: body.email, firstName: body.firstName, lastName: body.lastName }
 	);
 });
 

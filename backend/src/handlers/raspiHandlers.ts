@@ -44,7 +44,7 @@ export function normalizeMac(raw?: string | null): string | null {
 export async function handleRaspiPairing(c: Context) {
     try {
         const decoded = await requireFirebaseHeader(c, c.env.FIREBASE_API_KEY);
-        const { raspiMac, firstName, lastName } = await c.req.json();
+        const { raspiMac } = await c.req.json();
 
         const rawMac = raspiMac.toString();
         if(!rawMac) {
@@ -60,7 +60,6 @@ export async function handleRaspiPairing(c: Context) {
             }
         
             // Ensure user exists
-            // TODO: fix before deploying to wrangler
             await handleLogin(c);
         
             // Update raspi_mac field
@@ -107,7 +106,8 @@ export async function handlePostRaspiSensorReadings(c: Context) {
 
         // Map readings to the insert structure
         const rowsToInsert = readings.map((r: any) => ({
-            userId: userId,
+            userId: userId!,
+            sensorId: r.sensorId,
             type: r.type,
             value: r.value
         }));
@@ -191,14 +191,14 @@ export async function returnPinActionTable(c: Context) {
         // Find the schedules that the user has on their account
         const fanSchedules = await db.select()
             .from(schema.fanSchedule)
-            .where(eq(schema.fanSchedule.userId, userId))
+            .where(eq(schema.fanSchedule.userId, userId!))
             .all();
         // One fanSchedule per user, so this is just a workaround for typescript
         const fanSchedule = fanSchedules[0];
 
         const waterSchedules = await db.select()
             .from(schema.waterSchedule)
-            .where(eq(schema.waterSchedule.userId, userId))
+            .where(eq(schema.waterSchedule.userId, userId!))
             .orderBy(asc(schema.waterSchedule.type))
             .all();
         
