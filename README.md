@@ -13,18 +13,42 @@ This api route returns the "Pin Action Table (PAT)" for a Raspberry Pi. The PAT 
 
 **Example Request:**
 ```
+Content-Type: application/json
 GET <base url>/raspi/1a:2b:3c:4d:5e:6f/pinActionTable
 ```
 
 ### `/raspi/sensorReadings`
-_TODO: Use the MAC address and remove bearer token on Pi tonight_
-
 This api route handles the communication of sensor readings from Raspberry Pi devices to D1.
 It requires that a Raspberry Pi is paired to a user via the `api/auth/pairDevice` route.
 When the Pi collects sensor data, it sends readings through this endpoint, where they are validated and written to the `pings` table in D1
 
 #### POST Request
-_TODO: implement_
+```
+Content-Type: application/json
+POST <base url>/raspi/1a:2a:3a:4a:5a:6a/sensorReadings
+{
+  "readings": [
+    { 
+      "userId": "5evLyFQtkAbQgZ3K0HjKbFLqfRx2", 
+      "sensorId": "50d44462-f75f-433a-8517-1d748af5bd90", 
+      "type": "temperature", 
+      "value": 50 
+    },
+    { 
+      "userId": "5evLyFQtkAbQgZ3K0HjKbFLqfRx2", 
+      "sensorId": "50d44462-f75f-433a-8517-1d748af5bd90", 
+      "type": "temperature", 
+      "value": 60 
+    },
+    { 
+      "userId": "5evLyFQtkAbQgZ3K0HjKbFLqfRx2", 
+      "sensorId": "bb22f704-3f5a-4593-a1ff-cad093a1bfca", 
+      "type": "humidity", 
+      "value": 60 
+    }
+  ]
+}
+```
 
 ### Firebase Header
 All API routes under the `/api` route (all routes under this header) require the use of a Firebase-provided JWT. This ensures that the data is only coming from officially authenticated sources. All API calls _must_ have the following header:
