@@ -48,11 +48,11 @@ import { handleAddTableEntry } from './handlers/addTableEntry';
 import { handleSendEmail } from "./handlers/handleEmailDistribution";
 import { requireFirebaseHeader as requireFirebaseHeader } from './handlers/authHandlers';
 import { handleLogin } from './handlers/handleLogin';
-import { 
-	handlePiPairingStatus, 
+import {
 	returnPinActionTable, 
 	handleRaspiPairing, 
-	handlePostRaspiSensorReadings
+	handlePostRaspiSensorReadings,
+	handleRaspiPairingStatus
 } from './handlers/raspiHandlers';
 import { handleReturnUserDataByTable } from './handlers/userDataHandlers';
 import { distributeUnsentEmails } from './handlers/scheduledEventHandlers';
@@ -89,10 +89,6 @@ app.use("*",
 	})
 );
 
-app.get('/raspi/pairingStatus', async(c) => {
-	return await handlePiPairingStatus(c);
-});
-
 /**
  * Created by Drew on 10.20
  */
@@ -105,6 +101,13 @@ app.get('/raspi/:mac/pinActionTable', async(c) => {
  */
 app.post('raspi/:mac/sensorReadings', async(c) => {
 	return await handlePostRaspiSensorReadings(c);
+});
+
+/**
+ * Created by Drew on 10.29
+ */
+app.get('/raspi/:mac/pairingStatus', async(c) => {
+	return await handleRaspiPairingStatus(c);
 });
 
 /**
@@ -162,10 +165,10 @@ app.post('api/data/user', async (c) => {
 			email: body.email, 
 			firstName: body.firstName, 
 			lastName: body.lastName, 
-			profileImage: body.profileImage,
-			notificationsForBlueAlerts: body.notificationsForBlueAlerts,
-			notificationsForGreenAlerts: body.notificationsForGreenAlerts,
-			notificationsForRedAlerts: body.notificationsForRedAlerts
+			profileImage: body.profileImage || "",
+			notificationsForBlueAlerts: body.notificationsForBlueAlerts || "N",
+			notificationsForGreenAlerts: body.notificationsForGreenAlerts || "N",
+			notificationsForRedAlerts: body.notificationsForRedAlerts || "Y"
 		}
 	);
 });

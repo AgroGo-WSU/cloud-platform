@@ -23,6 +23,35 @@ export function normalizeMac(raw?: string | null): string | null {
     return hex.match(/.{2}/g)!.join(":");
 }
 
+export async function handleRaspiPairingStatus(c: Context) {
+    try {
+        const mac = c.req.param("mac");
+        const db = getDB({ DB: c.env.DB });
+
+        const users = await db
+            .select()
+            .from(schema.user)
+            .where(eq(schema.user.raspiMac, mac));
+        
+        const user = users[0];
+        
+        if(users.length > 0) {
+            return c.json({
+                paired: true,
+                user: user.id
+            });
+        } else {
+            return c.json({
+                paired: false,
+                user: ""
+            });
+        }
+    } catch(error) {
+        console.error("[pairDevice] Error:", error);
+        return c.json({ error: (error as Error).message }, 500);
+    }
+}
+
 /**
  * Handles pairing of a Raspberry Pi device with a user's account.
  *

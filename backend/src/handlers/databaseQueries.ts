@@ -113,70 +113,70 @@ export async function returnTableEntries<T extends Table>(
  * @param lastName - The last name tied to the user account
  * -method created nick 10.1
  */
-export async function createUser(
-    db: DB, 
-    userId: string,
-    location: string, 
-    email: string,
-    firstName: string,
-    lastName: string
-): Promise<void> {
-    const user = await db.query.user.findFirst({
-        where: eq(schema.user.id, userId),
-    });
+// export async function createUser(
+//     db: DB, 
+//     userId: string,
+//     location: string, 
+//     email: string,
+//     firstName: string,
+//     lastName: string
+// ): Promise<void> {
+//     const user = await db.query.user.findFirst({
+//         where: eq(schema.user.id, userId),
+//     });
 
-    if(user) return;
+//     if(user) return;
 
-    await db.insert(schema.user).values({ 
-        id: userId, 
-        email: email,
-        location: location,
-        firstName: firstName,
-        lastName: lastName
-    });
-}
+//     await db.insert(schema.user).values({ 
+//         id: userId, 
+//         email: email,
+//         location: location,
+//         firstName: firstName,
+//         lastName: lastName
+//     });
+// }
 
-export async function createPi(
-    db: DB, 
-    userId: string, 
-    email: string,
-    firstName: string,
-    lastName: string
-): Promise<void> {
-    const user = await db.query.user.findFirst({
-        where: eq(schema.user.id, userId),
-    });
+// export async function createPi(
+//     db: DB, 
+//     userId: string, 
+//     email: string,
+//     firstName: string,
+//     lastName: string
+// ): Promise<void> {
+//     const user = await db.query.user.findFirst({
+//         where: eq(schema.user.id, userId),
+//     });
 
-    if(user) return;
+//     if(user) return;
 
-    await db.insert(schema.user).values({ 
-        id: userId, 
-        email: email,
-        firstName: firstName,
-        lastName: lastName
-    });
-}
+//     await db.insert(schema.user).values({ 
+//         id: userId, 
+//         email: email,
+//         firstName: firstName,
+//         lastName: lastName
+//     });
+// }
 
-export async function createReading(
-    db: DB, 
-    userId: string, 
-    email: string,
-    firstName: string,
-    lastName: string
-): Promise<void> {
-    const user = await db.query.user.findFirst({
-        where: eq(schema.user.id, userId),
-    });
+// export async function createReading(
+//     db: DB, 
+//     userId: string, 
+//     email: string,
+//     firstName: string,
+//     lastName: string
+// ): Promise<void> {
+//     const user = await db.query.user.findFirst({
+//         where: eq(schema.user.id, userId),
+//     });
 
-    if(user) return;
+//     if(user) return;
 
-    await db.insert(schema.user).values({ 
-        id: userId, 
-        email: email,
-        firstName: firstName,
-        lastName: lastName
-    });
-}
+//     await db.insert(schema.user).values({ 
+//         id: userId, 
+//         email: email,
+//         firstName: firstName,
+//         lastName: lastName
+//     });
+// }
 
 /**
  * Creates a new zone for a given user.
@@ -188,12 +188,12 @@ export async function createReading(
  * @returns The ID of the newly created zone
  * -method created by nick 10.1
  */
-export async function createZone(db: DB, userId: string, zoneName: string): Promise<string> {
-    const newZone = {
-        id: crypto.randomUUID(),
-        userId: userId,
-        zoneName: zoneName,
-    };
-    await db.insert(schema.zone).values(newZone);
-    return newZone.id;
-}
+// export async function createZone(db: DB, userId: string, zoneName: string): Promise<string> {
+//     const newZone = {
+//         id: crypto.randomUUID(),
+//         userId: userId,
+//         zoneName: zoneName,
+//     };
+//     await db.insert(schema.zone).values(newZone);
+//     return newZone.id;
+// }
