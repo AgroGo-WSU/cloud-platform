@@ -26,15 +26,24 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
  * using their Firebase UID as the primary key.
  * table added by nick 10.2
  */
+export const notificationFlagEnum = ["Y", "N"] as const;
 export const user = sqliteTable("user",{
-    // TODO: use firebase UID
     id: text("id").primaryKey(),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
     location: text("location"),
     email: text("email").notNull(),
     firstName: text("first_name"),
     lastName: text("last_name"),
-    raspiMac: text("raspi_mac")
+    raspiMac: text("raspi_mac"),
+    notificationsForGreenAlerts: text("notifications_for_green_alerts", {
+        enum: notificationFlagEnum
+    }).default("N"),
+    notificationsForBlueAlerts: text("notifications_for_blue_alerts", {
+        enum: notificationFlagEnum
+    }).default("N"),
+    notificationsForRedAlerts: text("notifications_for_red_alerts", {
+        enum: notificationFlagEnum
+    }).default("Y")
 });
 
 /** 
@@ -58,6 +67,7 @@ export const sensors = sqliteTable("sensors",{
  */
 export const zone = sqliteTable("zone", {
     id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()),
+    zoneNumber: text("zone_number").notNull().default("1"),
     userId: text("user_id").notNull().references(() => user.id),
     // human readable name to be used with frontend ui.
     zoneName: text("zone_name").notNull(),
@@ -132,7 +142,7 @@ export const rasPi = sqliteTable("rasPi", {
 });
 
 /** alert table */
-export const alertSeverityEnum = ['low', 'medium', 'high', 'error'] as const;
+export const alertSeverityEnum = ['green', 'blue', 'red', 'error'] as const;
 export const alertStatusEnum = ["handled", "unhandled", "error"] as const;
 export const alert = sqliteTable("alert", {
     id: text("id").primaryKey().$default(() => crypto.randomUUID()),

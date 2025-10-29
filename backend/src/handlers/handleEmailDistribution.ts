@@ -32,7 +32,6 @@ export async function handleSendEmail(c: Context) {
 
 		// Call the email handler
 		return await emailDistributionHandler.fetch(
-			c.req.raw,
 			c.env,
 			recipient,
 			subject,
@@ -75,7 +74,6 @@ export async function handleSendEmail(c: Context) {
  */
 export const emailDistributionHandler = {
     async fetch(
-        request: Request,
         env: any,
         recipient: string,
         subject: string,

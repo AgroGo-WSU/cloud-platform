@@ -55,6 +55,7 @@ import {
 	handlePostRaspiSensorReadings
 } from './handlers/raspiHandlers';
 import { handleReturnUserDataByTable } from './handlers/userDataHandlers';
+import { distributeUnsentEmails } from './handlers/scheduledEventHandlers';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
@@ -156,7 +157,16 @@ app.post('api/data/user', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.user, c,
-		{ id: body.id, location: body.location, email: body.email, firstName: body.firstName, lastName: body.lastName }
+		{ 
+			id: body.id, 
+			location: body.location, 
+			email: body.email, 
+			firstName: body.firstName, 
+			lastName: body.lastName, 
+			notificationsForBlueAlerts: body.notificationsForBlueAlerts,
+			notificationsForGreenAlerts: body.notificationsForGreenAlerts,
+			notificationsForRedAlerts: body.notificationsForRedAlerts
+		}
 	);
 });
 
@@ -172,7 +182,7 @@ app.post('/api/data/zone', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.zone, c,
-		{ userId: body.userId, zoneName: body.zoneName, description: body.description }
+		{ zoneNumber: body.zoneNumber, userId: body.userId, zoneName: body.zoneName, description: body.description }
 	);
 });
 
@@ -277,6 +287,15 @@ app.post('/api/sendEmail', async (c) => {
 });
 
 export default app;
+
+// Scheduled cron job
+export const scheduledJob = async (
+	event: ScheduledEvent, 
+	env: Env, 
+	ctx: ExecutionContext
+) => {
+	distributeUnsentEmails(env);
+}
 
 // Durable Object stub to prevent Cloudflare from throwing errors
 export class StreamingObject {
