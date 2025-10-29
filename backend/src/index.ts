@@ -72,8 +72,23 @@ declare module 'hono' {
 
 const app = new Hono<{ Bindings: Env }>();
 
+// Disable strict COOP/COEP for Firebase popup compatibility
+app.use('*', async (c, next) => {
+  c.header('Cross-Origin-Opener-Policy', 'unsafe-none')
+  c.header('Cross-Origin-Embedder-Policy', 'unsafe-none')
+  await next()
+});
+
 // telling app to use CORS headers - Madeline
-app.use('*', cors());
+app.use("*", 
+	cors({
+		origin: "*",
+		credentials: true,
+		allowHeaders: ['Authorization', 'Content-Type'],
+	})
+);
+
+
 
 app.get('/raspi/pairingStatus', async(c) => {
 	return await handlePiPairingStatus(c);
