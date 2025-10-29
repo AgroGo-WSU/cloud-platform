@@ -89,8 +89,6 @@ app.use("*",
 	})
 );
 
-
-
 app.get('/raspi/pairingStatus', async(c) => {
 	return await handlePiPairingStatus(c);
 });
@@ -158,23 +156,17 @@ app.post('api/data/user', async (c) => {
 	return handleAddTableEntry(
 		schema.user, c,
 		{ 
-			id: body.id, 
+			id: body.id,
+			createdAt: body.createdAt,
 			location: body.location, 
 			email: body.email, 
 			firstName: body.firstName, 
 			lastName: body.lastName, 
+			profileImage: body.profileImage,
 			notificationsForBlueAlerts: body.notificationsForBlueAlerts,
 			notificationsForGreenAlerts: body.notificationsForGreenAlerts,
 			notificationsForRedAlerts: body.notificationsForRedAlerts
 		}
-	);
-});
-
-app.post('/api/data/sensors', async (c) => {
-	const body = await c.req.json();
-	return handleAddTableEntry(
-		schema.sensors, c,
-		{ userId: body.userId, type: body.type, zone: body.zone }
 	);
 });
 
@@ -194,19 +186,11 @@ app.post('/api/data/tempAndHumidity', async (c) => {
 	);
 });
 
-app.post('/api/data/pings', async (c) => {
-	const body = await c.req.json();
-	return handleAddTableEntry(
-		schema.pings, c,
-		{ userId: body.userId, sensorId: body.sensorId, confirmed: body.confirmed }
-	);
-});
-
 app.post('/api/data/waterSchedule', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.waterSchedule, c,
-		{ userId: body.userId, sensorId: body.sensorId, time: body.time }
+		{ userId: body.userId, time: body.time }
 	);
 });
 
@@ -214,7 +198,7 @@ app.post('/api/data/fanSchedule', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.fanSchedule, c,
-		{ userId: body.userId, sensorId: body.sensorId, timeOn: body.timeOn, timeOff: body.timeOff }
+		{ userId: body.userId, timeOn: body.timeOn, timeOff: body.timeOff }
 	);
 });
 
@@ -234,27 +218,11 @@ app.post('/api/data/fanLog', async (c) => {
 	);
 });
 
-app.post('/api/data/rasPi', async (c) => {
-	const body = await c.req.json();
-	return handleAddTableEntry(
-		schema.rasPi, c,
-		{ status: body.status }
-	);
-});
-
 app.post('/api/data/alert', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.alert, c,
 		{ userId: body.userId, message: body.message, severity: body.severity, status: body.status }
-	);
-});
-
-app.post('/api/data/integration', async (c) => {
-	const body = await c.req.json();
-	return handleAddTableEntry(
-		schema.integration, c,
-		{ userId: body.userId, provider: body.provider, accessToken: body.accessToken, refreshToken: body.refreshToken, expiresAt: body.expiresAt }
 	);
 });
 
