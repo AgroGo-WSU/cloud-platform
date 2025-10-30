@@ -201,7 +201,7 @@ app.post('/api/data/fanSchedule', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.fanSchedule, c,
-		{ userId: body.userId, timeOn: body.timeOn, timeOff: body.timeOff }
+		{ userId: body.userId, timeOn: body.timeOn, timeOff: "na" }
 	);
 });
 

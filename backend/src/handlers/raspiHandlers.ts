@@ -122,30 +122,37 @@ export async function handlePostRaspiSensorReadings(c: Context) {
         const mac = c.req.param("mac");
         const db = getDB({ DB: c.env.DB })
         const body = await c.req.json();
-        const readings = body.readings; // Expect { readings: [...] }
+        const reading = body.reading.toString().split(","); // Expect { { 'temperature': 22.3, 'humidity': 60 } }
+        
+        // Parse the incoming reading to get the individual reads
+        const tempSide = reading[0];
+        const humSide = reading[1];
+
+        const tempRead = tempSide.split(":");
+        const humRead = humSide.split(":");
 
         if(!mac) return c.json({ error: "Missing MAC address" }, 400);
 
-        if(!Array.isArray(readings) || readings.length === 0) {
-            return c.json({ error: "No sensor readings provided" }, 400);
-        }
+        if(!reading) return c.json({ error: "Missing reading" })
 
         // Find the userId associated with this MAC address
         const userId = await findUserFromMacAddress(db, mac);
 
-        // Map readings to the insert structure
-        const rowsToInsert = readings.map((r: any) => ({
+        await db.insert(schema.tempAndHumidity).values({
             userId: userId!,
-            sensorId: r.sensorId,
-            type: r.type,
-            value: r.value
-        }));
+            type: "temperature",
+            value: tempRead[1]
+        });
 
-        await db.insert(schema.tempAndHumidity).values(rowsToInsert);
+        await db.insert(schema.tempAndHumidity).values({
+            userId: userId!,
+            type: "humidity",
+            value: humRead[1]
+        });
 
         return c.json({ 
             success: true,
-            inserted: rowsToInsert.length
+            inserted: 2
         });
 
     } catch(error) {
