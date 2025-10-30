@@ -5,6 +5,26 @@ All API routes contained in AgroGo's backend platform are defined below.
 
 For API routes, AgroGo uses Cloudflare workers which are exposed to traditional HTTP-style routes via the use of Hono Router.
 
+Use this for the base url if using productionized workers
+- https://backend.agrogodev.workers.dev/
+
+### `/raspi/:mac/pairingStatus`
+Returns the pairing status of a raspberry pi device
+
+```
+GET <base url>/raspi/11:22:33:44:55:66/pairingStatus
+```
+
+### `/raspi/:mac/sensorReadings`
+Sends sensor readings from thje Pi to the 
+
+#### POST Request
+- Sends sensor readings to D1
+```
+POST <base url>/raspi/11:22:33:44:55:66/sensorReadings
+{ "reading": "{ 'temperature': 21.4, 'humidity': 50 }" }
+```
+
 ### `/raspi/:mac/pinActionTable`
 This api route returns the "Pin Action Table (PAT)" for a Raspberry Pi. The PAT returns the schedule for a Raspberry Pi. The PAT is set on the frontend and transferred to D1. That is where this route comes in. It checks for the most recent PAT and sets its local sensors accordingly.
 
@@ -15,39 +35,6 @@ This api route returns the "Pin Action Table (PAT)" for a Raspberry Pi. The PAT 
 ```
 Content-Type: application/json
 GET <base url>/raspi/1a:2b:3c:4d:5e:6f/pinActionTable
-```
-
-### `/raspi/:mac/sensorReadings`
-This api route handles the communication of sensor readings from Raspberry Pi devices to D1.
-It requires that a Raspberry Pi is paired to a user via the `api/auth/pairDevice` route.
-When the Pi collects sensor data, it sends readings through this endpoint, where they are validated and written to the `pings` table in D1
-
-#### POST Request
-```
-Content-Type: application/json
-POST <base url>/raspi/1a:2a:3a:4a:5a:6a/sensorReadings
-{
-  "readings": [
-    { 
-      "userId": "5evLyFQtkAbQgZ3K0HjKbFLqfRx2", 
-      "sensorId": "50d44462-f75f-433a-8517-1d748af5bd90", 
-      "type": "temperature", 
-      "value": 50 
-    },
-    { 
-      "userId": "5evLyFQtkAbQgZ3K0HjKbFLqfRx2", 
-      "sensorId": "50d44462-f75f-433a-8517-1d748af5bd90", 
-      "type": "temperature", 
-      "value": 60 
-    },
-    { 
-      "userId": "5evLyFQtkAbQgZ3K0HjKbFLqfRx2", 
-      "sensorId": "bb22f704-3f5a-4593-a1ff-cad093a1bfca", 
-      "type": "humidity", 
-      "value": 60 
-    }
-  ]
-}
 ```
 
 ### Firebase Header
