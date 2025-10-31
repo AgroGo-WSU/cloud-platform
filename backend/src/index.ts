@@ -39,7 +39,7 @@
  * belong in their respective modules to keep routes concise and testable.
  */
 
-import { Hono } from 'hono';
+import { Context, Hono } from 'hono';
 // CORS headers allow other domains (like our frontend) to query our endpoint - Madeline
 import { cors } from 'hono/cors';
 import { handleGetTableEntries } from './handlers/getTableEntries';
@@ -257,20 +257,19 @@ app.post('/api/sendEmail', async (c) => {
 	return await handleSendEmail(c);
 });
 
-app.post('/api/distributeEmails', async(c) => {
-	return await distributeUnsentEmails(c);
-});
+// app.post('/api/distributeEmails', async(c) => {
+// 	return await distributeUnsentEmails(c);
+// });
 
-export default app;
+// Scheduled cron job
+export default {
+	fetch: app.fetch,
+	scheduled: async (event, env, ctx) => {
+		await distributeUnsentEmails(env);
+	}
+};
 
-// // Scheduled cron job
-// export const scheduledJob = async (
-// 	event: ScheduledEvent, 
-// 	env: Env, 
-// 	ctx: ExecutionContext
-// ) => {
-// 	distributeUnsentEmails(env);
-// }
+
 
 // Durable Object stub to prevent Cloudflare from throwing errors
 export class StreamingObject {

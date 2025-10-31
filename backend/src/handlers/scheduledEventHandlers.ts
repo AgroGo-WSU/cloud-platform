@@ -3,20 +3,21 @@ import { getDB } from "./databaseQueries";
 import { emailDistributionHandler } from "./handleEmailDistribution";
 import * as schema from "../schema";
 import { eq } from "drizzle-orm";
-import { Context } from "hono";
+import type { Env } from "../index";
 
-export const distributeUnsentEmails = async (
-    c: Context,
-) => {
+export const distributeUnsentEmails = async (env: Env) => {
     console.log("Running email distribution job");
 
     // Check the database for any unsent email alerts on the table
-    const db = getDB({ DB: c.env.DB});
+    const db = getDB({ DB: env.DB});
     const unhandledEmails = await returnTableEntries(
         db,
         schema.alert,
         { status: "unhandled" },
-        1000 // Set to an unrealistically high number that we will never reach in the scope of this class
+        // Since cron runs every minute, and resend needs 
+        // a second delay in between sends. Set the max amount
+        // to 50 (60 - small buffer)
+        50
     );
 
     console.log(`Found ${unhandledEmails.length} unhandled emails`);
@@ -40,8 +41,8 @@ export const distributeUnsentEmails = async (
             const message = alert.message;
             const sender = "alerts@agrogo.org";
             const res = await emailDistributionHandler.fetch(
-                c.env,
-                "nortleyo@gmail.com",
+                env,
+                recipient,
                 subject,
                 message,
                 sender
@@ -65,8 +66,8 @@ export const distributeUnsentEmails = async (
             console.error(`Error processing alert ${alert.id}:`, error);
         }
 
+        // Leave a second of delay to prevent Resend from flagging our
+        // alerts as spam
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-
-    return c.json({ "success": true, "count": sentCount })
 }
