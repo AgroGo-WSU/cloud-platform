@@ -54,7 +54,7 @@ import {
 	handlePostRaspiSensorReadings,
 	handleRaspiPairingStatus
 } from './handlers/raspiHandlers';
-import { handleReturnUserDataByTable } from './handlers/userDataHandlers';
+import { handleDetermineUserDeviceHealth, handleReturnUserDataByTable } from './handlers/userDataHandlers';
 import { distributeUnsentEmails } from './handlers/scheduledEventHandlers';
 
 export interface Env {
@@ -149,6 +149,10 @@ app.get('api/user/:table', async(c) => {
 	return await handleReturnUserDataByTable(c);
 });
 
+app.get('api/userDeviceHealth', async(c) => {
+	return await handleDetermineUserDeviceHealth(c);
+});
+
 
 /**
  * POST Routes for database tables
@@ -171,10 +175,6 @@ app.post('api/data/user', async (c) => {
 			notificationsForRedAlerts: body.notificationsForRedAlerts || "Y"
 		}
 	);
-});
-
-app.post('api/user/deviceHealth', async(c) => {
-
 });
 
 app.post('/api/data/zone', async (c) => {
@@ -213,7 +213,7 @@ app.post('/api/data/waterLog', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.waterLog, c,
-		{ userId: body.userId, schedule_instance: body.schedule_instance, timeOnConfirm: body.timeOnConfirm, timeConfirmed: body.timeConfirmed }
+		{ userId: body.userId, schedule_instance: null, timeOnConfirm: body.timeOnConfirm, timeConfirmed: body.timeConfirmed }
 	);
 });
 
@@ -221,7 +221,7 @@ app.post('/api/data/fanLog', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.fanLog, c,
-		{ userId: body.userId, schedule_instance: body.schedule_instance, timeOnConfirm: body.timeOnConfirm, timeOff: body.timeOff }
+		{ userId: body.userId, schedule_instance: null, timeOnConfirm: body.timeOnConfirm, timeOff: body.timeOff }
 	);
 });
 

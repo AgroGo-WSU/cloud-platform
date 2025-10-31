@@ -24,17 +24,17 @@ interface FirebaseAccountsLookupResponse {
  *
  * @async
  * @function getFirebaseUserInfo
- * @param {string} token - The Firebase ID token to verify.
+ * @param {string} bearerToken - The Firebase ID token to verify.
  * @param {string} apiKey - The Firebase project's Web API key used for authentication with the Identity Toolkit API.
  * @returns {Promise<FirebaseUser | null>} A promise that resolves to a `FirebaseUser` object if verification succeeds, or `null` if invalid or not found.
  */
-export async function getFirebaseUserInfo(token: string, apiKey: string): Promise<FirebaseUser | null> {
+export async function getFirebaseUserInfo(bearerToken: string, apiKey: string): Promise<FirebaseUser | null> {
   const response = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken: token })
+      body: JSON.stringify({ idToken: bearerToken })
     }
   );
 
