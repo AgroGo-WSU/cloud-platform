@@ -3,25 +3,10 @@ import * as schema from '../schema';
 import { asc, eq } from "drizzle-orm";
 import { Context } from "hono";
 import { handleLogin } from "./handleLogin";
-import type { DB } from "./databaseQueries";
 import { requireFirebaseHeader } from "./authHandlers";
+import { normalizeMac } from "../utilities/normalizeMac";
+import { findUserFromMacAddress } from "../utilities/findUserFromMacAddress";
 
-/**
- * Helper: normalize MAC string to canonical lower-case colon-separated format
- * - Accepts formats like "AA:BB:CC:DD:EE:FF", "aabbccddeeff", "AA-BB-..." etc.
- * - Returns null if input doesn't look like 12 hex digits.
- */
-export function normalizeMac(raw?: string | null): string | null {
-    if(!raw) return null;
-
-    // Convert input to lowercase and remove any character that isn't (0-9 or a-f)
-    const hex = raw.toLowerCase().replace(/[^0-9a-f]/g, '');
-    if(hex.length !== 12) return null;
-
-    // Format as a proper Mac Address
-    // i.e. aabbccddeeff --> aa:bb:cc:dd:ee:ff
-    return hex.match(/.{2}/g)!.join(":");
-}
 
 export async function handleRaspiPairingStatus(c: Context) {
     try {
@@ -159,18 +144,6 @@ export async function handlePostRaspiSensorReadings(c: Context) {
         console.error("[sensorReadings] Error:", error);
         return c.json({ error: (error as Error).message }, 500);
     }
-}
-
-async function findUserFromMacAddress(db: DB, mac: string) {
-    // The Pi passes a MAC address, find the user associated with
-    // that address for the tempAndHumidity table's schema
-    const users = await db.select()
-        .from(schema.user)
-        .where(eq(schema.user.raspiMac, mac))
-        .all();
-        
-    // There will only be one userId associated with each MAC address
-    return users.length > 0 ? users[0].id : null;
 }
 
 /**

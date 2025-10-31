@@ -1,6 +1,5 @@
 import { getDB, returnTableEntries } from "./databaseQueries";
 import { Context } from "hono";
-import { SQLiteTable } from "drizzle-orm/sqlite-core";
 import * as schema from "../schema";
 
 /**

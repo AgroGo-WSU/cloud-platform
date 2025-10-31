@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import * as schema from '../schema';
 import { getDB } from './databaseQueries';
 import { eq } from 'drizzle-orm';
+import { getFirebaseUserInfo } from '../utilities/getFirebaseUserInfo';
 
 /**
  * Retrieves all records from a specified database table associated with the authenticated user.
@@ -39,9 +40,6 @@ import { eq } from 'drizzle-orm';
  */
 export async function handleReturnUserDataByTable(c: Context) {
     try {
-        const bearer = c.req.header('Authorization') || '';
-
-        // Decode user data using the bearer key
         const userId = c.get('userId');
 
         if(!userId) return c.json({ error: "User not authenticated" }, 400);
@@ -76,6 +74,17 @@ export async function handleReturnUserDataByTable(c: Context) {
         }, 200);
     } catch(error) {
         console.error("[handleReturnUserDataByTable] Error:", error);
+        return c.json({ error: (error as Error).message }, 500);
+    }
+}
+
+export async function handleDetermineUserDeviceHealth(c: Context) {
+    try {
+        // First, determine if user has a mac address associated
+
+        const db = getDB({ DB: c.env.db });
+    } catch(error) {
+        console.error("[handleDetermineUserDeviceHealth] Error:", error);
         return c.json({ error: (error as Error).message }, 500);
     }
 }

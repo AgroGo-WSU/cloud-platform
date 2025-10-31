@@ -173,6 +173,10 @@ app.post('api/data/user', async (c) => {
 	);
 });
 
+app.post('api/user/deviceHealth', async(c) => {
+
+});
+
 app.post('/api/data/zone', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -257,19 +261,16 @@ app.post('/api/sendEmail', async (c) => {
 	return await handleSendEmail(c);
 });
 
-// app.post('/api/distributeEmails', async(c) => {
-// 	return await distributeUnsentEmails(c);
-// });
 
-// Scheduled cron job
 export default {
+	// API routes
 	fetch: app.fetch,
-	scheduled: async (event, env, ctx) => {
+
+	// Scheduled cron job
+	scheduled: async (event: ScheduledEvent, env: Env, ctx: ExecutionContext) => {
 		await distributeUnsentEmails(env);
 	}
 };
-
-
 
 // Durable Object stub to prevent Cloudflare from throwing errors
 export class StreamingObject {
