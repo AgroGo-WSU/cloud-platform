@@ -58,6 +58,7 @@ export async function handleLogin(c: Context) {
         // Create a new user record if they don't exist
         const newUser = {
             id: decoded.uid,
+            createdAt: new Date().toISOString().split('T')[0], // MM-DD-YYYY
             location: location,
             email: decoded.email!,
             firstName: firstName,

@@ -81,7 +81,7 @@ export async function handleReturnUserDataByTable(c: Context) {
 export async function handleDetermineUserDeviceHealth(c: Context) {
     try {
         // First, determine if user has a mac address associated
-
+        
         const db = getDB({ DB: c.env.db });
     } catch(error) {
         console.error("[handleDetermineUserDeviceHealth] Error:", error);
