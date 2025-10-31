@@ -66,6 +66,19 @@ Content-Type: application/json
 }
 ```
 
+### `/api/userDeviceHealth`
+Checks if a device had pings within the last 20 minutes. Checks the following tables for pings
+- tempAndHumidity
+- waterLog
+- fanLog
+
+**Example Request:** (determines if a user has a device attached, and if it has been seen in the last 20 minutes)
+```
+<base url>/api/userDeviceHealth
+Authorization: Bearer <firebase JWT>
+Content-Type: application.json
+```
+
 ### `/api/auth/pairDevice`
 This route handles pairing a Raspberry Pi device (by MAC address) to a user's account.
 It should be called after a user logs in and when the Raspberry Pi device is ready to be linked to that user.
