@@ -254,19 +254,23 @@ app.get('api/data/:table', async (c) => {
  * Created by Drew on 10.4
  */
 app.post('/api/sendEmail', async (c) => {
-	handleSendEmail(c);
+	return await handleSendEmail(c);
+});
+
+app.post('/api/distributeEmails', async(c) => {
+	return await distributeUnsentEmails(c);
 });
 
 export default app;
 
-// Scheduled cron job
-export const scheduledJob = async (
-	event: ScheduledEvent, 
-	env: Env, 
-	ctx: ExecutionContext
-) => {
-	distributeUnsentEmails(env);
-}
+// // Scheduled cron job
+// export const scheduledJob = async (
+// 	event: ScheduledEvent, 
+// 	env: Env, 
+// 	ctx: ExecutionContext
+// ) => {
+// 	distributeUnsentEmails(env);
+// }
 
 // Durable Object stub to prevent Cloudflare from throwing errors
 export class StreamingObject {

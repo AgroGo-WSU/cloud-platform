@@ -3,15 +3,15 @@ import { getDB } from "./databaseQueries";
 import { emailDistributionHandler } from "./handleEmailDistribution";
 import * as schema from "../schema";
 import { eq } from "drizzle-orm";
-import type { Env } from "../index";
+import { Context } from "hono";
 
 export const distributeUnsentEmails = async (
-    env: Env,
+    c: Context,
 ) => {
     console.log("Running email distribution job");
 
     // Check the database for any unsent email alerts on the table
-    const db = getDB({ DB: env.DB});
+    const db = getDB({ DB: c.env.DB});
     const unhandledEmails = await returnTableEntries(
         db,
         schema.alert,
@@ -20,6 +20,7 @@ export const distributeUnsentEmails = async (
     );
 
     console.log(`Found ${unhandledEmails.length} unhandled emails`);
+    let sentCount: number = 0;
 
     // Iterate and send each email
     for (const alert of unhandledEmails) {
@@ -37,10 +38,10 @@ export const distributeUnsentEmails = async (
             const recipient = alertUser.email;
             const subject = `Alert: ${alert.severity}`;
             const message = alert.message;
-            const sender = "alerts@agrogo.com";
+            const sender = "alerts@agrogo.org";
             const res = await emailDistributionHandler.fetch(
-                env,
-                recipient,
+                c.env,
+                "nortleyo@gmail.com",
                 subject,
                 message,
                 sender
@@ -49,6 +50,8 @@ export const distributeUnsentEmails = async (
             // Check to be sure that the email sent properly
             if(res.status === 200) {
                 console.log(`Email successfully sent to ${recipient}`);
+
+                sentCount++;
 
                 // Mark the alert as handled
                 await db
@@ -61,5 +64,9 @@ export const distributeUnsentEmails = async (
         } catch (error) {
             console.error(`Error processing alert ${alert.id}:`, error);
         }
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
     }
+
+    return c.json({ "success": true, "count": sentCount })
 }
