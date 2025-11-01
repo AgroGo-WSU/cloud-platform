@@ -168,6 +168,58 @@ Content-Type: application/json
 }
 ```
 
+#### PATCH Request
+- Updates a record in the specified table
+- Similar to PUT, but allows users to only select certain fields
+- Only the following tables have this route implemented
+  - `user`
+  - `plantInventory`
+
+**Example Request** (accepted though fields are missing)
+```
+POST <base url>/api/data/user
+{
+  "entries": [
+    {
+      "id": "5evLyFQtkAbQgZ3K0HjKbFLqfRx2",
+      "createdAt": "2025-10-29",
+      "location": "Detroit",
+      "email": "theelderone02@gmail.com",
+      "firstName": "Drew",
+      "lastName": "Adomaitis",
+      "raspiMac": ""
+    }
+  ]
+}
+
+```
+
+#### PUT Request
+- Updates a record in the specified table
+- Similar to PATCH, but doesn't users to only select certain fields
+- Only the following tables have this route implemented
+  - `user`
+  - `plantInventory`
+
+**Example Request** (not accepted because fields are missing)
+```
+POST <base url>/api/data/user
+{
+  "entries": [
+    {
+      "id": "5evLyFQtkAbQgZ3K0HjKbFLqfRx2",
+      "createdAt": "2025-10-29",
+      "location": "Detroit",
+      "email": "theelderone02@gmail.com",
+      "firstName": "Drew",
+      "lastName": "Adomaitis",
+      "raspiMac": ""
+    }
+  ]
+}
+
+```
+
 ### `/api/sendEmail`
 Communicates with the Resend API to distribute an email.
 
