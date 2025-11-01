@@ -164,11 +164,14 @@ app.get('api/userDeviceHealth', async(c) => {
  */
 app.post('api/data/user', async (c) => {
 	const body = await c.req.json();
+	const now = new Date();
+	const formattedDate = `${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}-${now.getFullYear()}`;
+
 	return handleAddTableEntry(
 		schema.user, c,
 		{ 
 			id: body.id,
-			createdAt: new Date().toISOString(),
+			createdAt: formattedDate,
 			location: body.location, 
 			email: body.email, 
 			firstName: body.firstName, 
