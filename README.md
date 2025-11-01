@@ -5,8 +5,40 @@ All API routes contained in AgroGo's backend platform are defined below.
 
 For API routes, AgroGo uses Cloudflare workers which are exposed to traditional HTTP-style routes via the use of Hono Router.
 
+Use this for the base url if using productionized workers
+- https://backend.agrogodev.workers.dev/
+
+### `/raspi/:mac/pairingStatus`
+Returns the pairing status of a raspberry pi device
+
+```
+GET <base url>/raspi/11:22:33:44:55:66/pairingStatus
+```
+
+### `/raspi/:mac/sensorReadings`
+Sends sensor readings from thje Pi to the 
+
+#### POST Request
+- Sends sensor readings to D1
+```
+POST <base url>/raspi/11:22:33:44:55:66/sensorReadings
+{ "reading": "{ 'temperature': 21.4, 'humidity': 50 }" }
+```
+
+### `/raspi/:mac/pinActionTable`
+This api route returns the "Pin Action Table (PAT)" for a Raspberry Pi. The PAT returns the schedule for a Raspberry Pi. The PAT is set on the frontend and transferred to D1. That is where this route comes in. It checks for the most recent PAT and sets its local sensors accordingly.
+
+#### GET Request
+- Retrieves the most recent PAT associated with a Raspberry Pi's MAC address
+
+**Example Request:**
+```
+Content-Type: application/json
+GET <base url>/raspi/1a:2b:3c:4d:5e:6f/pinActionTable
+```
+
 ### Firebase Header
-All API routes require the use of a Firebase-provided JWT. This ensures that the data is only coming from officially authenticated sources. All API calls _must_ have the following header:
+All API routes under the `/api` route (all routes under this header) require the use of a Firebase-provided JWT. This ensures that the data is only coming from officially authenticated sources. All API calls _must_ have the following header:
 - `Authorization: Bearer <firebase JWT>`
 
 ### `/api/auth/login`
@@ -32,6 +64,19 @@ Content-Type: application/json
   "firstName": "Drew",
   "lastName": "Adomaitis"
 }
+```
+
+### `/api/userDeviceHealth`
+Checks if a device had pings within the last 20 minutes. Checks the following tables for pings
+- tempAndHumidity
+- waterLog
+- fanLog
+
+**Example Request:** (determines if a user has a device attached, and if it has been seen in the last 20 minutes)
+```
+<base url>/api/userDeviceHealth
+Authorization: Bearer <firebase JWT>
+Content-Type: application.json
 ```
 
 ### `/api/auth/pairDevice`
