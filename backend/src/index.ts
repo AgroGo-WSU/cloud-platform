@@ -57,6 +57,7 @@ import {
 import { handleDetermineUserDeviceHealth, handleReturnUserDataByTable } from './handlers/userDataHandlers';
 import { distributeUnsentEmails } from './handlers/scheduledEventHandlers';
 import { handleEditTableEntries } from './handlers/editEntryHandlers';
+import { validateCompleteEntries } from './utilities/validateCompleteEntries';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
@@ -251,10 +252,24 @@ app.post('/api/data/plantInventory', async (c) => {
 	);
 });
 
-app.patch('/api/data/plantInventory', async(c) => {
+app.patch('/api/data/plantInventory', async (c) => {
 	const body = await c.req.json();
 	const entries = body.entries;
-	return await(handleEditTableEntries(schema.plantInventory, c, entries, "id"));
+	return await handleEditTableEntries(schema.plantInventory, c, entries, "id");
+});
+
+app.put('/api/data/plantInventory', async (c) => {
+	const body = await c.req.json();
+	const entries = body.entries;
+
+	// Validate that all required entries are passed before editing rows
+	const requiredFields = [
+		"id", "userId", "plantType", "plantName", "zoneId", "quantity", "datePlanted"
+	];
+	const validation = await validateCompleteEntries(entries, requiredFields);
+	if(!validation.valid) return c.json({ error: "Missing field in entries" }, 400);
+
+	return await handleEditTableEntries(schema.plantInventory, c, entries, "id");
 });
 
 /**
