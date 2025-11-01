@@ -1,4 +1,4 @@
-import { getDB } from "./databaseQueries";
+import { getDB } from "../utilities/databaseQueries";
 import * as schema from '../schema';
 import { asc, eq } from "drizzle-orm";
 import { Context } from "hono";

@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import * as schema from '../schema';
-import { getDB } from './databaseQueries';
+import { getDB } from '../utilities/databaseQueries';
 import { desc, eq } from 'drizzle-orm';
 import { getFirebaseUserInfo } from '../utilities/getFirebaseUserInfo';
 

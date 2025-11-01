@@ -1,4 +1,4 @@
-import { getDB, returnTableEntries } from "./databaseQueries";
+import { getDB, returnTableEntries } from "../utilities/databaseQueries";
 import { Context } from "hono";
 import * as schema from "../schema";
 

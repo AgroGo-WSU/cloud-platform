@@ -1,4 +1,4 @@
-import type { DB } from "../handlers/databaseQueries";
+import type { DB } from "./databaseQueries";
 import * as schema from '../schema';
 import { eq } from "drizzle-orm";
 

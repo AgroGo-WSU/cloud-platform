@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 import * as schema from "../schema";
-import type { DB } from "./databaseQueries";
+import type { DB } from "../utilities/databaseQueries";
 import type { InferModel } from "drizzle-orm";
 import { requireFirebaseHeader } from "./authHandlers";
-import { getDB } from "./databaseQueries";
+import { getDB } from "../utilities/databaseQueries";
 import { Context } from "hono";
 
 export type User = InferModel<typeof schema.user, 'select'>;

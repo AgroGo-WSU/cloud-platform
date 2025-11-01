@@ -40,7 +40,13 @@
 			│ │ │ │ │
 			* * * * *
 		*/
-		//"crons": ["*/1 * * * *"] // Runs the cron every minute
+		// Inactive cron declaration, runs every 2 hours
+		// Should be used when we aren't prepping for a demo
+		"crons": ["* */2 * * *"]
+
+		// Active cron declaration, runs every minute
+		// Should be used for testing or demo prep
+		//"crons": ["*/1 * * * *"]
 	},
 	"d1_databases": [
 		{

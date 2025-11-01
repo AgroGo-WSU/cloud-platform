@@ -1,5 +1,5 @@
-import { returnTableEntries } from "./databaseQueries";
-import { getDB } from "./databaseQueries";
+import { returnTableEntries } from "../utilities/databaseQueries";
+import { getDB } from "../utilities/databaseQueries";
 import { emailDistributionHandler } from "./handleEmailDistribution";
 import * as schema from "../schema";
 import { eq } from "drizzle-orm";

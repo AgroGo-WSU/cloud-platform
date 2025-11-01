@@ -17,7 +17,7 @@
  * - ./handlers/addTableEntry           : handleAddTableEntry (inserts into a table)
  * - ./handlers/getTableEntries         : handleGetTableEntries (query table rows with filters/limit)
  * - ./handlers/firebaseAuth            : verifyFirebaseToken used by auth middleware
- * - ./schema                          : Drizzle table definitions used to look up tables by name
+ * - ./schema                           : Drizzle table definitions used to look up tables by name
  *
  * See the README to see the route descriptions in detail.
  *
@@ -56,6 +56,7 @@ import {
 } from './handlers/raspiHandlers';
 import { handleDetermineUserDeviceHealth, handleReturnUserDataByTable } from './handlers/userDataHandlers';
 import { distributeUnsentEmails } from './handlers/scheduledEventHandlers';
+import { handleEditTableEntries } from './handlers/editEntryHandlers';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
@@ -149,13 +150,15 @@ app.get('api/user/:table', async(c) => {
 	return await handleReturnUserDataByTable(c);
 });
 
+/**
+ * Created by Drew on 10.31
+ */
 app.get('api/userDeviceHealth', async(c) => {
 	return await handleDetermineUserDeviceHealth(c);
 });
 
-
 /**
- * POST Routes for database tables
+ * Routes for specific database tables
  * 10.13 - Created by Drew
  */
 app.post('api/data/user', async (c) => {
@@ -164,7 +167,7 @@ app.post('api/data/user', async (c) => {
 		schema.user, c,
 		{ 
 			id: body.id,
-			createdAt: body.createdAt,
+			createdAt: new Date().toISOString(),
 			location: body.location, 
 			email: body.email, 
 			firstName: body.firstName, 
@@ -237,8 +240,21 @@ app.post('/api/data/plantInventory', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.plantInventory, c,
-		{ userId: body.userId, plantType: body.plantType, plantName: body.plantName, zoneId: body.zoneId, quantity: body.quantity }
+		{ 
+			userId: body.userId, 
+			plantType: body.plantType, 
+			plantName: body.plantName, 
+			zoneId: body.zoneId, 
+			quantity: body.quantity,
+			datePlanted: body.datePlanted
+		}
 	);
+});
+
+app.patch('/api/data/plantInventory', async(c) => {
+	const body = await c.req.json();
+	const entries = body.entries;
+	return await(handleEditTableEntries(schema.plantInventory, c, entries, "id"));
 });
 
 /**

@@ -1,7 +1,7 @@
 import { SQLiteTable } from "drizzle-orm/sqlite-core";
 import { InferInsertModel } from "drizzle-orm";
 import { Context } from "hono";
-import { getDB, insertTableEntry } from "./databaseQueries";
+import { getDB, insertTableEntry } from "../utilities/databaseQueries";
 
 /**
  * Inserts a new entry into the specified database table.
