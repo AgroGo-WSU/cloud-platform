@@ -40,12 +40,10 @@
 			│ │ │ │ │
 			* * * * *
 		*/
-		// Inactive cron declaration, runs every 2 hours
-		// Should be used when we aren't prepping for a demo
-		"crons": ["* */2 * * *"]
 
 		// Active cron declaration, runs every minute
 		// Should be used for testing or demo prep
+		// Comment out and delete in the dashboard otherwise
 		//"crons": ["*/1 * * * *"]
 	},
 	"d1_databases": [

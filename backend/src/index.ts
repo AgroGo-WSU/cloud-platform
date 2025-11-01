@@ -181,6 +181,28 @@ app.post('api/data/user', async (c) => {
 	);
 });
 
+app.patch('/api/data/user', async (c) => {
+	const body = await c.req.json();
+	const entries = body.entries;
+	return await handleEditTableEntries(schema.user, c, entries, "id");
+});
+
+app.put('/api/data/user', async (c) => {
+	const body = await c.req.json();
+	const entries = body.entries;
+
+	// Validate that all required entries are passed before editing rows
+	const requiredFields = [
+		"id", "createdAt", "location", "email", "firstName", "lastName",
+		"raspiMac", "profileImage", "notificationsForGreenAlerts",
+		"notificationsForBlueAlerts", "notificationsForRedAlerts"
+	];
+	const validation = await validateCompleteEntries(entries, requiredFields);
+	if(!validation.valid) return c.json({ error: "Missing field in entries" }, 400);
+
+	return await handleEditTableEntries(schema.user, c, entries, "id");
+});
+
 app.post('/api/data/zone', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
