@@ -1,5 +1,12 @@
-ALTER TABLE `plant` RENAME TO `plantInventory`;--> statement-breakpoint
-ALTER TABLE `rasPi` RENAME COLUMN "received_at" TO "created_at";--> statement-breakpoint
+CREATE TABLE `alert` (
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
+	`message` text NOT NULL,
+	`severity` text NOT NULL,
+	`status` text NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
 CREATE TABLE `fanLog` (
 	`id` text PRIMARY KEY NOT NULL,
 	`schedule_instance` text,
@@ -17,8 +24,19 @@ CREATE TABLE `fanSchedule` (
 	`sensorId` text,
 	`scheduled_time_on` text NOT NULL,
 	`scheduled_time_off` text NOT NULL,
+	`duration` text,
 	FOREIGN KEY (`userID`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`sensorId`) REFERENCES `sensors`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `integrations` (
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
+	`provider` text NOT NULL,
+	`access_token` text,
+	`refresh_token` text,
+	`expires_at` text,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE TABLE `pings` (
@@ -26,8 +44,27 @@ CREATE TABLE `pings` (
 	`sensorId` text,
 	`confirmed` text NOT NULL,
 	`confirmed_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`value` text,
 	FOREIGN KEY (`userID`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`sensorId`) REFERENCES `sensors`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `plantInventory` (
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
+	`plant_type` text,
+	`plant_name` text,
+	`zone_id` text NOT NULL,
+	`quantity` integer,
+	`date_planted` text,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`zone_id`) REFERENCES `zone`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `rasPi` (
+	`id` text PRIMARY KEY NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`status` text DEFAULT 'unpaired' NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `sensors` (
@@ -40,11 +77,23 @@ CREATE TABLE `sensors` (
 );
 --> statement-breakpoint
 CREATE TABLE `tempAndHumidity` (
-	`userID` text,
+	`userID` text NOT NULL,
 	`type` text NOT NULL,
+	`sensorId` text,
 	`received_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`value` text NOT NULL,
-	FOREIGN KEY (`userID`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`userID`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`sensorId`) REFERENCES `sensors`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `user` (
+	`id` text PRIMARY KEY NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`location` text,
+	`email` text NOT NULL,
+	`first_name` text,
+	`last_name` text,
+	`raspi_mac` text
 );
 --> statement-breakpoint
 CREATE TABLE `waterLog` (
@@ -59,53 +108,20 @@ CREATE TABLE `waterLog` (
 --> statement-breakpoint
 CREATE TABLE `waterSchedule` (
 	`id` text PRIMARY KEY NOT NULL,
+	`type` text,
 	`userID` text,
 	`sensorId` text,
 	`scheduled_time` text NOT NULL,
+	`duration` text,
 	FOREIGN KEY (`userID`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`sensorId`) REFERENCES `sensors`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-DROP TABLE `automations`;--> statement-breakpoint
-DROP TABLE `deviceReadings`;--> statement-breakpoint
-PRAGMA foreign_keys=OFF;--> statement-breakpoint
-CREATE TABLE `__new_plantInventory` (
+CREATE TABLE `zone` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
-	`plant_type` text,
-	`plant_name` text,
-	`zone_id` text NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`zone_id`) REFERENCES `zone`(`id`) ON UPDATE no action ON DELETE no action
-);
---> statement-breakpoint
-INSERT INTO `__new_plantInventory`("id", "user_id", "plant_type", "plant_name", "zone_id") SELECT "id", "user_id", "plant_type", "plant_name", "zone_id" FROM `plantInventory`;--> statement-breakpoint
-DROP TABLE `plantInventory`;--> statement-breakpoint
-ALTER TABLE `__new_plantInventory` RENAME TO `plantInventory`;--> statement-breakpoint
-PRAGMA foreign_keys=ON;--> statement-breakpoint
-CREATE TABLE `__new_alert` (
-	`id` text PRIMARY KEY NOT NULL,
-	`user_id` text NOT NULL,
-	`message` text NOT NULL,
-	`severity` text NOT NULL,
-	`status` text NOT NULL,
+	`zone_name` text NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`description` text,
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
 );
---> statement-breakpoint
-INSERT INTO `__new_alert`("id", "user_id", "message", "severity", "status") SELECT "id", "user_id", "message", "severity", "status" FROM `alert`;--> statement-breakpoint
-DROP TABLE `alert`;--> statement-breakpoint
-ALTER TABLE `__new_alert` RENAME TO `alert`;--> statement-breakpoint
-CREATE TABLE `__new_integrations` (
-	`id` text PRIMARY KEY NOT NULL,
-	`user_id` text NOT NULL,
-	`provider` text NOT NULL,
-	`access_token` text,
-	`refresh_token` text,
-	`expires_at` text,
-	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
-);
---> statement-breakpoint
-INSERT INTO `__new_integrations`("id", "user_id", "provider", "access_token", "refresh_token", "expires_at") SELECT "id", "user_id", "provider", "access_token", "refresh_token", "expires_at" FROM `integrations`;--> statement-breakpoint
-DROP TABLE `integrations`;--> statement-breakpoint
-ALTER TABLE `__new_integrations` RENAME TO `integrations`;--> statement-breakpoint
-ALTER TABLE `user` ADD `location` text;

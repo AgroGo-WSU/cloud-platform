@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "670aa61a-075a-4448-85bd-475414a19e6d",
-  "prevId": "86a0833a-34da-43d9-b0c1-a37004cec2c2",
+  "id": "2d5a6bd1-7755-446d-981e-8d6342e547da",
+  "prevId": "168174cc-302c-491d-ba72-d3a8778e50ed",
   "tables": {
     "alert": {
       "name": "alert",
@@ -32,14 +32,14 @@
           "name": "severity",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "status": {
           "name": "status",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         }
       },
@@ -107,7 +107,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {},
@@ -160,13 +160,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "sensorID": {
-          "name": "sensorID",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "scheduled_time_on": {
           "name": "scheduled_time_on",
           "type": "text",
@@ -179,6 +172,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },
@@ -196,159 +196,14 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
-        },
-        "fanSchedule_sensorID_sensors_id_fk": {
-          "name": "fanSchedule_sensorID_sensors_id_fk",
-          "tableFrom": "fanSchedule",
-          "tableTo": "sensors",
-          "columnsFrom": [
-            "sensorID"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "integrations": {
-      "name": "integrations",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "provider": {
-          "name": "provider",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "access_token": {
-          "name": "access_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "refresh_token": {
-          "name": "refresh_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "integrations_user_id_user_id_fk": {
-          "name": "integrations_user_id_user_id_fk",
-          "tableFrom": "integrations",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "pings": {
-      "name": "pings",
-      "columns": {
-        "userID": {
-          "name": "userID",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "sensorID": {
-          "name": "sensorID",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "confirmed": {
-          "name": "confirmed",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "confirmed_at": {
-          "name": "confirmed_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "pings_userID_user_id_fk": {
-          "name": "pings_userID_user_id_fk",
-          "tableFrom": "pings",
-          "tableTo": "user",
-          "columnsFrom": [
-            "userID"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "pings_sensorID_sensors_id_fk": {
-          "name": "pings_sensorID_sensors_id_fk",
-          "tableFrom": "pings",
-          "tableTo": "sensors",
-          "columnsFrom": [
-            "sensorID"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "plant": {
-      "name": "plant",
+    "plantInventory": {
+      "name": "plantInventory",
       "columns": {
         "id": {
           "name": "id",
@@ -384,13 +239,27 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date_planted": {
+          "name": "date_planted",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "plant_user_id_user_id_fk": {
-          "name": "plant_user_id_user_id_fk",
-          "tableFrom": "plant",
+        "plantInventory_user_id_user_id_fk": {
+          "name": "plantInventory_user_id_user_id_fk",
+          "tableFrom": "plantInventory",
           "tableTo": "user",
           "columnsFrom": [
             "user_id"
@@ -401,110 +270,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "plant_zone_id_zone_id_fk": {
-          "name": "plant_zone_id_zone_id_fk",
-          "tableFrom": "plant",
+        "plantInventory_zone_id_zone_id_fk": {
+          "name": "plantInventory_zone_id_zone_id_fk",
+          "tableFrom": "plantInventory",
           "tableTo": "zone",
           "columnsFrom": [
             "zone_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "rasPi": {
-      "name": "rasPi",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'unpaired'"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "sensors": {
-      "name": "sensors",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "zone_name": {
-          "name": "zone_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "sensors_user_id_user_id_fk": {
-          "name": "sensors_user_id_user_id_fk",
-          "tableFrom": "sensors",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "sensors_zone_name_zone_id_fk": {
-          "name": "sensors_zone_name_zone_id_fk",
-          "tableFrom": "sensors",
-          "tableTo": "zone",
-          "columnsFrom": [
-            "zone_name"
           ],
           "columnsTo": [
             "id"
@@ -524,7 +295,7 @@
           "name": "userID",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "type": {
@@ -540,7 +311,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "default": "CURRENT_TIMESTAMP"
         },
         "value": {
           "name": "value",
@@ -585,14 +356,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "autoincrement": false
         },
         "location": {
           "name": "location",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "email": {
@@ -606,15 +376,53 @@
           "name": "first_name",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "last_name": {
           "name": "last_name",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
+        },
+        "raspi_mac": {
+          "name": "raspi_mac",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "profile_image": {
+          "name": "profile_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notifications_for_green_alerts": {
+          "name": "notifications_for_green_alerts",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'N'"
+        },
+        "notifications_for_blue_alerts": {
+          "name": "notifications_for_blue_alerts",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'N'"
+        },
+        "notifications_for_red_alerts": {
+          "name": "notifications_for_red_alerts",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'Y'"
         }
       },
       "indexes": {},
@@ -660,7 +468,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {},
@@ -706,15 +514,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "userID": {
-          "name": "userID",
+        "type": {
+          "name": "type",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "sensorID": {
-          "name": "sensorID",
+        "userID": {
+          "name": "userID",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -726,6 +534,13 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -736,19 +551,6 @@
           "tableTo": "user",
           "columnsFrom": [
             "userID"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "waterSchedule_sensorID_sensors_id_fk": {
-          "name": "waterSchedule_sensorID_sensors_id_fk",
-          "tableFrom": "waterSchedule",
-          "tableTo": "sensors",
-          "columnsFrom": [
-            "sensorID"
           ],
           "columnsTo": [
             "id"
@@ -771,6 +573,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "zone_number": {
+          "name": "zone_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'1'"
+        },
         "user_id": {
           "name": "user_id",
           "type": "text",
@@ -791,7 +601,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'CURRENT_TIMESTAMP'"
+          "default": "CURRENT_TIMESTAMP"
         },
         "description": {
           "name": "description",

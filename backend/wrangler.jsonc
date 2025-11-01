@@ -28,6 +28,24 @@
 			}
 		]
 	},
+	"triggers": {
+		/**
+		 ========== Cron Format ==========
+		 	┌───────────── minute (0–59)
+			│ ┌───────────── hour (0–23)
+			│ │ ┌───────────── day of the month (1–31)
+			│ │ │ ┌───────────── month (1–12)
+			│ │ │ │ ┌───────────── day of the week (0–6, where 0 = Sunday)
+			│ │ │ │ │
+			│ │ │ │ │
+			* * * * *
+		*/
+
+		// Active cron declaration, runs every minute
+		// Should be used for testing or demo prep
+		// Comment out and delete in the dashboard otherwise
+		//"crons": ["*/1 * * * *"]
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",

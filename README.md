@@ -104,7 +104,47 @@ Content-Type: application/json
 }
 ```
 
-### `/api/data/<table name>`
+### `/api/raspi/sensorReadings`
+
+This api route handles the communication of sensor readings from Raspberry Pi devices to D1.
+It requires that a Raspberry Pi is paired to a user via the `api/auth/pairDevice` route.
+When the Pi collects sensor data, it sends readings through this endpoint, where they are validated and written to the `pings` table in D1
+
+#### POST Request
+- Accepts a JSON body containing an array of sensor readings.
+- Each reading object must contain:
+  - `sensorUUID`: The unique ID of the sensor (string)
+  - `value`: The numeric reading captured from the sensor (number)
+  - `userID`: The Firebase UID of the user associated with the device (string)
+
+Each reading is validated against the `sensors` table to ensure the sensor exists before inserting data into the `pings` table.
+
+If no valid readings are found, the request will return a `400 Bad Request` error.
+If successful, the route returns a confirmation message along with the count of inserted readings.
+
+**Example Request**
+
+```
+POST <base url>/api/raspi/sensorReadings
+Authorization: Bearer <firebase JWT>
+Content-Type: application/json
+{
+  "readings": [
+    {
+      "sensorUUID": "soil-123",
+      "value": 47.5,
+      "userID": "firebase-user-uuid-123"
+    },
+    {
+      "sensorUUID": "temp-456",
+      "value": 22.1,
+      "userID": "firebase-user-uuid-123"
+    }
+  ]
+}
+```
+
+### `/api/data/<table name>` (inactive, being added back on the evening of 10.21 or morning of 10.22)
 This route handles all database insertion queries. The route will take incoming HTTP information and translate it into SQL queries (via the use of Drizzle ORM) that can be used to manipulate the database. This route is important because it ensures that the data is entering the database in the correct format, and from the correct actors.
 
 AgroGo has the following tables in the D1 database. All of which can be accessed using this route

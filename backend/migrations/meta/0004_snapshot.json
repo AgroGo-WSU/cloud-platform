@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "cf326719-6cdf-409e-8faf-8c084855e935",
-  "prevId": "a1113e5b-4066-4e8e-bff7-ca18f79c8892",
+  "id": "168174cc-302c-491d-ba72-d3a8778e50ed",
+  "prevId": "6229dd61-8eaa-442b-bf78-721b5cc41aae",
   "tables": {
     "alert": {
       "name": "alert",
@@ -179,6 +179,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },
@@ -398,6 +405,13 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "date_planted": {
+          "name": "date_planted",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -538,7 +552,7 @@
           "name": "userID",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "type": {
@@ -546,6 +560,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "sensorId": {
+          "name": "sensorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "received_at": {
@@ -572,6 +593,19 @@
           "tableTo": "user",
           "columnsFrom": [
             "userID"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tempAndHumidity_sensorId_sensors_id_fk": {
+          "name": "tempAndHumidity_sensorId_sensors_id_fk",
+          "tableFrom": "tempAndHumidity",
+          "tableTo": "sensors",
+          "columnsFrom": [
+            "sensorId"
           ],
           "columnsTo": [
             "id"
@@ -636,6 +670,30 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "notifications_for_green_alerts": {
+          "name": "notifications_for_green_alerts",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'N'"
+        },
+        "notifications_for_blue_alerts": {
+          "name": "notifications_for_blue_alerts",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'N'"
+        },
+        "notifications_for_red_alerts": {
+          "name": "notifications_for_red_alerts",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'Y'"
         }
       },
       "indexes": {},
@@ -727,6 +785,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "userID": {
           "name": "userID",
           "type": "text",
@@ -798,6 +863,14 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
+        },
+        "zone_number": {
+          "name": "zone_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'1'"
         },
         "user_id": {
           "name": "user_id",

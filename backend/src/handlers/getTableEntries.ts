@@ -1,6 +1,6 @@
-import { getDB, returnTableEntries } from "./databaseQueries";
+import { getDB, returnTableEntries } from "../utilities/databaseQueries";
 import { Context } from "hono";
-import { SQLiteTable } from "drizzle-orm/sqlite-core";
+import * as schema from "../schema";
 
 /**
  * Retrieves entries from the specified database table based on URL query parameters.
@@ -14,10 +14,16 @@ import { SQLiteTable } from "drizzle-orm/sqlite-core";
  * @returns {Promise<Response>} A JSON response containing the retrieved entries or an error message.
  */
 export async function handleGetTableEntries (
-    table: SQLiteTable, 
     c: Context
 ) {
     try {
+        // Find the table's name that was passed
+        const tableName = c.req.param('table');
+
+        // Check if the table exists in the schema
+        const table = (schema as Record<string, any>)[tableName];
+        if(!table) return c.json({ error: `Table ${tableName} not found`}, 404);
+
         const db = getDB({ DB: c.env.DB });
         const url = new URL(c.req.url);
         const queryParams = Object.fromEntries(url.searchParams.entries());
