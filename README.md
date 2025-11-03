@@ -144,7 +144,21 @@ Content-Type: application/json
 }
 ```
 
-### `/api/data/<table name>` (inactive, being added back on the evening of 10.21 or morning of 10.22)
+### `/api/user/<table name>`
+
+#### GET request
+This route returns all data associated with a user by table. All that is needed is the following data
+- A user's bearer token
+- A table name (passed in the url)
+
+**Example Request:** (returns all data associated with the authenticated on the `plantInventory` table
+```
+GET <base url>/api/user/plantInventory
+Authorization: Bearer <firebase JWT>
+Content-Type: application/json
+```
+
+### `/api/data/<table name>`
 This route handles all database insertion queries. The route will take incoming HTTP information and translate it into SQL queries (via the use of Drizzle ORM) that can be used to manipulate the database. This route is important because it ensures that the data is entering the database in the correct format, and from the correct actors.
 
 AgroGo has the following tables in the D1 database. All of which can be accessed using this route
