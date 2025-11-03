@@ -3,64 +3,52 @@ import { SQLiteTable } from "drizzle-orm/sqlite-core";
 import { Context } from "hono";
 import { getDB } from "../utilities/databaseQueries";
 
-export async function handleEditTableEntries<
+export async function handleEditTableEntry<
     T extends SQLiteTable,
     PK extends keyof T["_"]["columns"]
 >(
     table: T,
     c: Context,
-    entries: InferInsertModel<T>[],
+    entry: InferInsertModel<T>,
     primaryKey: PK // Explicitly passed for each table
 ) {
     try {
         const db = getDB({ DB: c.env.DB });
         const pkColumn = (table as any)[primaryKey];
 
-
-        let validCount = 0;
-        let invalidEntries: any[] = [];
-
         // Multiple entries may be passed, validate every entry before updating
-        for(const entry of entries) {
-            const pkValue = (entry as any)[primaryKey];
+        const pkValue = (entry as any)[primaryKey];
 
-            // Ensure the pk was passed
-            if(!pkValue) {
-                invalidEntries.push({ entry, reason: "missing primary key"});
-                continue;
-            }
-
-            const found = await db
-                .select()
-                .from(table)
-                .where(eq(pkColumn, pkValue))
-                .all();
-            
-            // 1 and only 1 record should be passed, validate that the condition is met
-            if(found.length === 0) {
-                invalidEntries.push({ entry, reason: "no match"});
-                continue;
-            } else if(found.length > 1) {
-                invalidEntries.push({ entry, reason: "ambiguous match"});
-                continue;
-            }
-
-            // Update the entry, and add to the tally
-            await db.update(table)
-                .set(entry)
-                .where(eq(pkColumn, pkValue))
-                .run();
-            validCount++;
+        // Ensure the pk was passed
+        if(!pkValue) {
+            return c.json({ entry, reason: "missing primary key"}, 400);
         }
+
+        const found = await db
+            .select()
+            .from(table)
+            .where(eq(pkColumn, pkValue))
+            .all();
+        
+        // 1 and only 1 record should be passed, validate that the condition is met
+        if(found.length === 0) {
+            return c.json({ entry, reason: "no match"}, 400);
+        } else if(found.length > 1) {
+            return c.json({ entry, reason: ">1 match, ambiguous"}, 400);
+        }
+
+        // As long as 1 value was found, update it in the database
+        await db.update(table)
+            .set(entry)
+            .where(eq(pkColumn, pkValue))
+            .run();
 
         return c.json({
             success: true,
-            validCount,
-            invalidCount: invalidEntries.length,
-            invalidEntries
+            data: entry
         });
     } catch(error) {
         console.error(error);
-		return c.json({ error: 'Failed to retrieve entry' }, 500);
+		return c.json({ error: 'Failed to retrieve entry: ' + error }, 500);
     }
 }

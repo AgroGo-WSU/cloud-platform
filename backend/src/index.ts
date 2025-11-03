@@ -56,8 +56,8 @@ import {
 } from './handlers/raspiHandlers';
 import { handleDetermineUserDeviceHealth, handleReturnUserDataByTable } from './handlers/userDataHandlers';
 import { distributeUnsentEmails } from './handlers/scheduledEventHandlers';
-import { handleEditTableEntries } from './handlers/editEntryHandlers';
-import { validateCompleteEntries } from './utilities/validateCompleteEntries';
+import { handleEditTableEntry } from './handlers/editEntryHandlers';
+import { validateCompleteEntry } from './utilities/validateCompleteEntries';
 
 export interface Env {
 	STREAMING_OBJECT: DurableObjectNamespace;
@@ -186,24 +186,22 @@ app.post('api/data/user', async (c) => {
 
 app.patch('/api/data/user', async (c) => {
 	const body = await c.req.json();
-	const entries = body.entries;
-	return await handleEditTableEntries(schema.user, c, entries, "id");
+	return await handleEditTableEntry(schema.user, c, body, "id");
 });
 
 app.put('/api/data/user', async (c) => {
 	const body = await c.req.json();
-	const entries = body.entries;
 
-	// Validate that all required entries are passed before editing rows
+	// Validate that all required fields are passed before editing row
 	const requiredFields = [
 		"id", "createdAt", "location", "email", "firstName", "lastName",
 		"raspiMac", "profileImage", "notificationsForGreenAlerts",
 		"notificationsForBlueAlerts", "notificationsForRedAlerts"
 	];
-	const validation = await validateCompleteEntries(entries, requiredFields);
-	if(!validation.valid) return c.json({ error: "Missing field in entries" }, 400);
+	
+	await validateCompleteEntry(c, body, requiredFields);
 
-	return await handleEditTableEntries(schema.user, c, entries, "id");
+	return await handleEditTableEntry(schema.user, c, body, "id");
 });
 
 app.post('/api/data/zone', async (c) => {
@@ -279,22 +277,19 @@ app.post('/api/data/plantInventory', async (c) => {
 
 app.patch('/api/data/plantInventory', async (c) => {
 	const body = await c.req.json();
-	const entries = body.entries;
-	return await handleEditTableEntries(schema.plantInventory, c, entries, "id");
+	return await handleEditTableEntry(schema.plantInventory, c, body, "id");
 });
 
 app.put('/api/data/plantInventory', async (c) => {
 	const body = await c.req.json();
-	const entries = body.entries;
 
-	// Validate that all required entries are passed before editing rows
+	// Validate that all fields are passed before editing row
 	const requiredFields = [
 		"id", "userId", "plantType", "plantName", "zoneId", "quantity", "datePlanted"
 	];
-	const validation = await validateCompleteEntries(entries, requiredFields);
-	if(!validation.valid) return c.json({ error: "Missing field in entries" }, 400);
+	await validateCompleteEntry(c, body, requiredFields);
 
-	return await handleEditTableEntries(schema.plantInventory, c, entries, "id");
+	return await handleEditTableEntry(schema.plantInventory, c, body, "id");
 });
 
 /**
