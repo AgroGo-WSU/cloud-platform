@@ -39,7 +39,7 @@ export async function handleLogin(c: Context) {
 		const db = getDB({ DB: c.env.DB });
 
 		// Parse first/last name from request body
-		const { firstName, lastName, location } = await c.req.json();
+		const { firstName, lastName, location, profileImage } = await c.req.json();
 
         // Check if user already exists
         const existingUsers = await db.select()
@@ -52,7 +52,7 @@ export async function handleLogin(c: Context) {
         if(existingUsers.length > 0) {
             existingUser = existingUsers[0];
             console.log(`[handleLogin] Existing user logged in: ${decoded.uid}`);
-            return c.json({ userRecord: existingUser }, 200);
+            return c.json({ resp: "User already created!", userRecord: existingUser }, 400);
         }
 
         // Create a new user record if they don't exist
@@ -63,6 +63,7 @@ export async function handleLogin(c: Context) {
             email: decoded.email!,
             firstName: firstName,
             lastName: lastName,
+            profileImage: profileImage,
             // Blank on login, mac is added by the pairing function after insertion
             raspiMac: "" 
         };
