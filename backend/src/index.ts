@@ -54,7 +54,7 @@ import {
 	handlePostRaspiSensorReadings,
 	handleRaspiPairingStatus
 } from './handlers/raspiHandlers';
-import { handleDetermineUserDeviceHealth, handleReturnUserDataByTable } from './handlers/userDataHandlers';
+import { handleDeleteUserDataByTable, handleDetermineUserDeviceHealth, handleReturnUserDataByTable } from './handlers/userDataHandlers';
 import { distributeUnsentEmails } from './handlers/scheduledEventHandlers';
 import { handleEditTableEntry } from './handlers/editEntryHandlers';
 import { validateCompleteEntry } from './utilities/validateCompleteEntries';
@@ -143,6 +143,13 @@ app.use('/api/*', async (c, next) => {
 });
 
 // === All private API routes (require Firebase auth token) go below this line ===
+
+/**
+ * Created by Drew on 11.3
+ */
+app.delete('api/data/:table', async(c) => {
+	return await handleDeleteUserDataByTable(c);
+});
 
 /**
  * Created by Drew on 10.20
