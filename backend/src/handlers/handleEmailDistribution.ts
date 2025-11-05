@@ -86,13 +86,13 @@ export const emailDistributionHandler = {
                 headers: {
                     // NOTE: Need a .env file in the project directory
                     "Authorization": `Bearer ${env.resend_token}`,
-                    "Content-Type": "application/json",
+                    "Content-Type": "text/html",
                 },
                 body: JSON.stringify({
                     from: sender,
                     to: recipient,
                     subject: subject,
-                    text: message,
+                    html: message,
                 }),
             });
 

@@ -55,7 +55,7 @@ import {
 	handleRaspiPairingStatus
 } from './handlers/raspiHandlers';
 import { handleDeleteUserDataByTable, handleDetermineUserDeviceHealth, handleReturnUserDataByTable } from './handlers/userDataHandlers';
-import { distributeUnsentEmails } from './handlers/scheduledEventHandlers';
+import { distributeWeatherGovEmails, distributeUnsentEmails } from './handlers/scheduledEventHandlers';
 import { handleEditTableEntry } from './handlers/editEntryHandlers';
 import { validateCompleteEntry } from './utilities/validateCompleteEntries';
 
@@ -326,7 +326,23 @@ export default {
 
 	// Scheduled cron job
 	scheduled: async (event: ScheduledEvent, env: Env, ctx: ExecutionContext) => {
-		await distributeUnsentEmails(env);
+		// Cloudflare provides the cron string that triggered this execution
+		const cron = event.cron;
+
+		switch(cron) {
+			// Send any unsent alerts from the "alerts" table
+			case "*/1 * * * *":
+				ctx.waitUntil(distributeUnsentEmails(env));
+				break;
+			// Once a day, send an OpenMeteo alert to all users
+			// This will tell all users if any upcoming days have bad weather
+			case "40 15 * * *":
+				ctx.waitUntil(distributeWeatherGovEmails(env));
+				break;
+			default:
+				console.log("Unhandled cron:", cron);
+		}
+
 	}
 };
 
