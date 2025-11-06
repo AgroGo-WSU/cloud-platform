@@ -1,4 +1,4 @@
-import { getDB } from "../utilities/databaseQueries";
+import { getDB, insertTableEntry } from "../utilities/databaseQueries";
 import * as schema from '../schema';
 import { asc, eq } from "drizzle-orm";
 import { Context } from "hono";
@@ -7,6 +7,23 @@ import { requireFirebaseHeader } from "./authHandlers";
 import { normalizeMac } from "../utilities/normalizeMac";
 import { findUserFromMacAddress } from "../utilities/findUserFromMacAddress";
 
+export async function handleRaspiAlertPosting(c: Context) {
+    try {
+        const db = getDB({ DB: c.env.DB });
+
+        const body = await c.req.json();
+        const { userId, message, severity } = body;
+
+        const entry = await insertTableEntry(db, schema.alert, {
+            userId, message, severity, status: "unhandled"
+        });
+
+        return c.json({ success: true, data: entry })
+    } catch(error) {
+        console.error("[handleRaspiAlertPosting] Error:", error);
+        return c.json({ error: (error as Error).message }, 500);
+    }
+}
 
 export async function handleRaspiPairingStatus(c: Context) {
     try {

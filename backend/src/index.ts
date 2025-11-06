@@ -52,7 +52,8 @@ import {
 	returnPinActionTable, 
 	handleRaspiPairing, 
 	handlePostRaspiSensorReadings,
-	handleRaspiPairingStatus
+	handleRaspiPairingStatus,
+	handleRaspiAlertPosting
 } from './handlers/raspiHandlers';
 import { handleDeleteUserDataByTable, handleDetermineUserDeviceHealth, handleReturnUserDataByTable } from './handlers/userDataHandlers';
 import { distributeWeatherGovEmails, distributeUnsentEmails } from './handlers/scheduledEventHandlers';
@@ -103,6 +104,13 @@ app.get('/raspi/:mac/pinActionTable', async(c) => {
  */
 app.post('raspi/:mac/sensorReadings', async(c) => {
 	return await handlePostRaspiSensorReadings(c);
+});
+
+/**
+ * Created by Drew on 11.5
+ */
+app.post('raspi/alert', async(c) => {
+	return await handleRaspiAlertPosting(c);
 });
 
 /**
@@ -342,7 +350,6 @@ export default {
 			default:
 				console.log("Unhandled cron:", cron);
 		}
-
 	}
 };
 

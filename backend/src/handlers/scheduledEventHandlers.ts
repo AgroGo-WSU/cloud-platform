@@ -78,6 +78,27 @@ export const distributeWeatherGovEmails = async (env: Env) => {
   }
 }
 
+/**
+ * Distributes all unsent (unhandled) weather alert emails to users.
+ *
+ * This function retrieves all alerts from the database with a status of "unhandled",
+ * then sends each alert email to its associated user using the configured email
+ * distribution handler. After each successful send, the alert record is updated to
+ * "handled" to prevent duplicate sends.
+ *
+ * To avoid rate limiting or spam detection, a 1-second delay is added between each send.
+ * The function limits the number of emails sent per run to 50 to align with
+ * minute-based cron scheduling.
+ *
+ * @param {Env} env - The environment configuration object, which includes the database connection
+ *                    and email handler bindings.
+ *
+ * @returns {Promise<void>} Resolves when all pending emails have been processed.
+ *
+ * @example
+ * await distributeUnsentEmails(env);
+ * // Logs: "Found X unhandled emails", then sends each one with a 1s delay.
+ */
 export const distributeUnsentEmails = async (env: Env) => {
     console.log("Running email distribution job");
 
@@ -145,6 +166,26 @@ export const distributeUnsentEmails = async (env: Env) => {
     }
 }
 
+/**
+ * Fetches weather forecast data from Weather.gov and distributes inclement weather alerts to all users via email.
+ *
+ * This function retrieves both temperature and precipitation data for a configured geographic location
+ * (Detroit coordinates by default) using the Weather.gov API. It analyzes the forecast to detect extreme
+ * weather conditions such as high/low temperatures or heavy/no precipitation, and then composes an HTML
+ * alert email summarizing these conditions.
+ *
+ * The email is distributed to all registered users stored in the database using the configured
+ * email distribution handler. If any emails fail to send, the function logs the discrepancy for review.
+ *
+ * @param {Env} env - The environment configuration object, which includes the database connection
+ *                    and email handler bindings.
+ *
+ * @returns {Promise<void>} Resolves after all alert emails have been sent or logged as failed.
+ *
+ * @example
+ * await distributeWeatherGovEmails(env);
+ * // Logs: "X Emails Sent Successfully!" or error details if failures occur.
+ */
 const buildWeatherEmailBodyFromApi = async() => {
     try {
         // Fetch forecast from weather.gov
@@ -276,4 +317,3 @@ const buildWeatherEmailBodyFromApi = async() => {
         console.error("[buildWeatherEmailFromApi] error:", error);
     }
 }
-
