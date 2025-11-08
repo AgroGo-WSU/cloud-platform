@@ -1,11 +1,12 @@
 import { getDB, insertTableEntry } from "../utilities/databaseQueries";
 import * as schema from '../schema';
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { Context } from "hono";
 import { handleLogin } from "./handleLogin";
 import { requireFirebaseHeader } from "./authHandlers";
 import { normalizeMac } from "../utilities/normalizeMac";
 import { findUserFromMacAddress } from "../utilities/findUserFromMacAddress";
+import { duration } from "drizzle-orm/gel-core";
 
 export async function handleRaspiAlertPosting(c: Context) {
     try {
@@ -220,45 +221,71 @@ export async function returnPinActionTable(c: Context) {
             .where(eq(schema.fanSchedule.userId, userId!))
             .all();
         // One fanSchedule per user, so this is just a workaround for typescript
-        const fanSchedule = fanSchedules[0];
 
-        const waterSchedules = await db.select()
+        const water1Schedules = await db.select()
             .from(schema.waterSchedule)
-            .where(eq(schema.waterSchedule.userId, userId!))
+            .where(
+                and(
+                    eq(schema.waterSchedule.userId, userId!),
+                    eq(schema.waterSchedule.type, "1")
+                )
+            )
+            .orderBy(asc(schema.waterSchedule.type))
+            .all();
+        
+        const water2Schedules = await db.select()
+            .from(schema.waterSchedule)
+            .where(
+                and(
+                    eq(schema.waterSchedule.userId, userId!),
+                    eq(schema.waterSchedule.type, "2")
+                )
+            )
+            .orderBy(asc(schema.waterSchedule.type))
+            .all();
+        
+            const water3Schedules = await db.select()
+            .from(schema.waterSchedule)
+            .where(
+                and(
+                    eq(schema.waterSchedule.userId, userId!),
+                    eq(schema.waterSchedule.type, "3")
+                )
+            )
             .orderBy(asc(schema.waterSchedule.type))
             .all();
         
         // Map the water schedules to individual pins
-
-        const pinActionTable = [];
-
-        // Push the fan schedule to the pin action table
-        pinActionTable.push({
-            type: "fan",
-            pin: FAN_PIN,
-            time: fanSchedule.timeOn,
-            duration: calculateDurationFromTimes(fanSchedule.timeOn, fanSchedule.timeOff)
-        });
-
-        // Push the water schedules to the pin action table
-        pinActionTable.push({
-            type: "water1",
-            pin: WATER_PIN1,
-            time: waterSchedules[0].time,
-            duration: waterSchedules[0].duration
-        });
-        pinActionTable.push({
-            type: "water2",
-            pin: WATER_PIN2,
-            time: waterSchedules[1].time,
-            duration: waterSchedules[1].duration
-        });
-        pinActionTable.push({
-            type: "water3",
-            pin: WATER_PIN3,
-            time: waterSchedules[2].time,
-            duration: waterSchedules[2].duration
-        });
+        const pinActionTable = [
+            ...fanSchedules.map(s => ({
+                type: "fan",
+                pin: FAN_PIN,
+                userId: s.userId,
+                time: s.timeOn,
+                duration: s.duration
+            })),
+            ...water1Schedules.map(s => ({
+                type: "water1",
+                pin: WATER_PIN1,
+                userId: s.userId,
+                time: s.time,
+                duration: s.duration
+            })),
+            ...water2Schedules.map(s => ({
+                type: "water2",
+                pin: WATER_PIN2,
+                userId: s.userId,
+                time: s.time,
+                duration: s.duration
+            })),
+            ...water3Schedules.map(s => ({
+                type: "water3",
+                pin: WATER_PIN3,
+                userId: s.userId,
+                time: s.time,
+                duration: s.duration
+            }))
+        ];
 
         return c.json({ success: true, data: pinActionTable})
 
