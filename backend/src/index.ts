@@ -256,7 +256,7 @@ app.post('/api/data/waterSchedule', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.waterSchedule, c,
-		{ userId: body.userId, time: body.time }
+		{ userId: body.userId, time: body.time, duration: body.duration }
 	);
 });
 
@@ -280,7 +280,7 @@ app.post('/api/data/fanSchedule', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.fanSchedule, c,
-		{ userId: body.userId, timeOn: body.timeOn, timeOff: "na" }
+		{ userId: body.userId, timeOn: body.timeOn, duration: body.duration, timeOff: "na" }
 	);
 });
 
