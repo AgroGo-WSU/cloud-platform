@@ -242,7 +242,10 @@ export async function returnPinActionTable(c: Context) {
             time: waterSchedules[2].time,
             duration: waterSchedules[2].duration
         });
-
+        
+        for (const item of pinActionTable) {
+            delete (item as any).userId;
+        }
         return c.json({ success: true, data: pinActionTable})
 
     } catch(error) {
