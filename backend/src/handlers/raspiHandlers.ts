@@ -286,7 +286,9 @@ export async function returnPinActionTable(c: Context) {
                 duration: s.duration
             }))
         ];
-
+        for (const item of pinActionTable) {
+            delete (item as any).userId;
+}
         return c.json({ success: true, data: pinActionTable})
 
     } catch(error) {
