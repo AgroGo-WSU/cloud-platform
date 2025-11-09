@@ -256,7 +256,7 @@ app.post('/api/data/waterSchedule', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.waterSchedule, c,
-		{ userId: body.userId, time: body.time, duration: body.duration }
+		{ userId: body.userId, time: body.time, duration: body.duration, type: body.type, zoneType: body.zoneType }
 	);
 });
 
@@ -268,7 +268,7 @@ app.patch('/api/data/waterSchedule', async (c) => {
 app.put('/api/data/waterSchedule', async (c) => {
 	const body = await c.req.json();
 	const requiredFields = [
-		"id", "type", "userId", "time", "duration"
+		"id", "type", "userId", "time", "duration", "zoneType"
 	];
 
 	await validateCompleteEntry(c, body, requiredFields);
@@ -280,7 +280,7 @@ app.post('/api/data/fanSchedule', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.fanSchedule, c,
-		{ userId: body.userId, timeOn: body.timeOn, duration: body.duration, timeOff: "na" }
+		{ userId: body.userId, timeOn: body.timeOn, duration: body.duration, type: body.type, zoneType: body.zoneType, timeOff: "na" }
 	);
 });
 
@@ -292,7 +292,7 @@ app.patch('/api/data/fanSchedule', async (c) => {
 app.put('/api/data/fanSchedule', async (c) => {
 	const body = await c.req.json();
 	const requiredFields = [
-		"id", "type", "userId", "time", "duration"
+		"id", "type", "userId", "time", "duration", "zoneType"
 	];
 
 	await validateCompleteEntry(c, body, requiredFields);
