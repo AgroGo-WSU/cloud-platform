@@ -132,7 +132,7 @@ export async function handlePostRaspiSensorReadings(c: Context) {
         const humSide = reading[1];
 
         const tempRead = tempSide.split(":");
-        const humRead = humSide.split(":");
+        const humRead: string = humSide.split(":")[1];
 
         if(!mac) return c.json({ error: "Missing MAC address" }, 400);
 
@@ -150,7 +150,7 @@ export async function handlePostRaspiSensorReadings(c: Context) {
         await db.insert(schema.tempAndHumidity).values({
             userId: userId!,
             type: "humidity",
-            value: humRead[1]
+            value: humRead[1].replace(/}/, "") // A curly brace is left over, remove it when inserting readings to d1
         });
 
         return c.json({ 
