@@ -10,7 +10,7 @@
 
 import { drizzle, DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "../schema";
-import { eq, desc, Table, InferInsertModel, InferSelectModel, and } from "drizzle-orm";
+import { eq, desc, Table, InferInsertModel, InferSelectModel, and, asc } from "drizzle-orm";
 import { SQLiteTable } from "drizzle-orm/sqlite-core";
 
 /**
@@ -94,10 +94,24 @@ export async function returnTableEntries<T extends Table>(
     }
 
     // Build/return results
-    const result = await db
-        .select()
-        .from(table)
-        .where(whereClause)
-        .limit(amount);
+    let result;
+
+    // Special case for the tempAndHumidity table
+    // Frontend needs this sorted by most recently received items
+    if(table._.name === schema.tempAndHumidity._.name) {
+        result = await db
+            .select()
+            .from(table)
+            .where(whereClause)
+            .limit(amount)
+            .orderBy(desc(schema.tempAndHumidity.receivedAt));
+    } else {
+        result = await db
+            .select()
+            .from(table)
+            .where(whereClause)
+            .limit(amount);
+    }
+    
     return result;
 }
