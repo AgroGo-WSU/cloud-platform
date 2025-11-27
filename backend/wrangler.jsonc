@@ -47,7 +47,7 @@
 		// within the square brackets below.
 		"crons": [
 			"*/1 * * * *",
-			"* 5 * * *"
+			"* 10 * * *"
 		]
 	},
 	"d1_databases": [

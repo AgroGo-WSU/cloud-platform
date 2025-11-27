@@ -393,7 +393,7 @@ export default {
 				break;
 			// Once a day, send an OpenMeteo alert to all users
 			// This will tell all users if any upcoming days have bad weather
-			case "* 5 * * *":
+			case "* 10 * * *":
 				ctx.waitUntil(distributeWeatherGovEmails(env));
 				break;
 			default:
