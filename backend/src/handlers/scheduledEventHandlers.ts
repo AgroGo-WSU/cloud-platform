@@ -125,6 +125,11 @@ export const distributeUnsentEmails = async (env: Env) => {
                 .from(schema.user)
                 .where(eq(schema.user.id, alert.userId))
                 .all();
+            
+            if (alertUsers.length === 0) {
+                console.error(`No user found for alert ${alert.id} with userId ${alert.userId}`);
+                continue; // Skip sending this alert
+            }
             // There should only be one user, so to prevent type errors
             // Return the first user found
             const alertUser = alertUsers[0];
@@ -132,7 +137,7 @@ export const distributeUnsentEmails = async (env: Env) => {
             // Call the Resend email handler
             const recipient = alertUser.email;
             const subject = `Alert: ${alert.severity}`;
-            const message = alert.message;
+            const message = `<p>${alert.message}</p>`;
             const sender = "alerts@agrogo.org";
             const res = await emailDistributionHandler.fetch(
                 env,

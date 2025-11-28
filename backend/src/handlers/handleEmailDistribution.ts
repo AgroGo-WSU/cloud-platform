@@ -86,7 +86,7 @@ export const emailDistributionHandler = {
                 headers: {
                     // NOTE: Need a .env file in the project directory
                     "Authorization": `Bearer ${env.resend_token}`,
-                    "Content-Type": "text/html",
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                     from: sender,

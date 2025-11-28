@@ -386,6 +386,8 @@ export default {
 		// Cloudflare provides the cron string that triggered this execution
 		const cron = event.cron;
 
+		console.log("Triggered cron:", JSON.stringify(event.cron));
+
 		switch(cron) {
 			// Send any unsent alerts from the "alerts" table
 			case "*/1 * * * *":
@@ -393,7 +395,7 @@ export default {
 				break;
 			// Once a day, send an OpenMeteo alert to all users
 			// This will tell all users if any upcoming days have bad weather
-			case "* 10 * * *":
+			case "0 10 * * *":
 				ctx.waitUntil(distributeWeatherGovEmails(env));
 				break;
 			default:
