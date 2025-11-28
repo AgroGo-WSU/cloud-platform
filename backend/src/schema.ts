@@ -80,15 +80,18 @@ export const waterSchedule = sqliteTable("waterSchedule",{
     type: text("type"),
     userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are connected with user account, but leaving it here for now)
     time: text("scheduled_time").notNull(), // scheduled time
-    duration: text("duration")
+    duration: text("duration"),
+    zoneType: text("zone_type")
 });
 
 export const fanSchedule = sqliteTable("fanSchedule",{
     id: text("id").primaryKey().$defaultFn(()=> crypto.randomUUID()), // to id the instance 
+    type: text("type"),
     userId: text("userID").references(() => user.id), // reference the userID to identify the account (redundant bc sensors are connected with user account, but leaving it here for now)
     timeOn: text("scheduled_time_on").notNull(), // scheduled time on
     timeOff: text("scheduled_time_off").notNull(), // scheduled time off
-    duration: text("duration")
+    duration: text("duration"),
+    zoneType: text("zone_type")
 });
 
 export const waterLog = sqliteTable("waterLog",{ // this table is for confirming that these events happened

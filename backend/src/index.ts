@@ -52,10 +52,11 @@ import {
 	returnPinActionTable, 
 	handleRaspiPairing, 
 	handlePostRaspiSensorReadings,
-	handleRaspiPairingStatus
+	handleRaspiPairingStatus,
+	handleRaspiAlertPosting
 } from './handlers/raspiHandlers';
-import { handleDetermineUserDeviceHealth, handleReturnUserDataByTable } from './handlers/userDataHandlers';
-import { distributeUnsentEmails } from './handlers/scheduledEventHandlers';
+import { handleDeleteUserDataByTable, handleDetermineUserDeviceHealth, handleReturnUserDataByTable } from './handlers/userDataHandlers';
+import { distributeWeatherGovEmails, distributeUnsentEmails } from './handlers/scheduledEventHandlers';
 import { handleEditTableEntry } from './handlers/editEntryHandlers';
 import { validateCompleteEntry } from './utilities/validateCompleteEntries';
 
@@ -106,6 +107,13 @@ app.post('raspi/:mac/sensorReadings', async(c) => {
 });
 
 /**
+ * Created by Drew on 11.5
+ */
+app.post('raspi/alert', async(c) => {
+	return await handleRaspiAlertPosting(c);
+});
+
+/**
  * Created by Drew on 10.29
  */
 app.get('/raspi/:mac/pairingStatus', async(c) => {
@@ -143,6 +151,13 @@ app.use('/api/*', async (c, next) => {
 });
 
 // === All private API routes (require Firebase auth token) go below this line ===
+
+/**
+ * Created by Drew on 11.3
+ */
+app.delete('api/data/:table', async(c) => {
+	return await handleDeleteUserDataByTable(c);
+});
 
 /**
  * Created by Drew on 10.20
@@ -212,6 +227,23 @@ app.post('/api/data/zone', async (c) => {
 	);
 });
 
+app.patch('/api/data/zone', async (c) => {
+	const body = await c.req.json();
+	return await handleEditTableEntry(schema.user, c, body, "id");
+});
+
+app.put('/api/data/zone', async (c) => {
+	const body = await c.req.json();
+
+	const requiredFields = [
+		"zoneNumber", "userId", "zoneName", "description"
+	];
+
+	await validateCompleteEntry(c, body, requiredFields);
+
+	return await handleEditTableEntry(schema.zone, c, body, "id");
+});
+
 app.post('/api/data/tempAndHumidity', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
@@ -224,16 +256,48 @@ app.post('/api/data/waterSchedule', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.waterSchedule, c,
-		{ userId: body.userId, time: body.time }
+		{ userId: body.userId, time: body.time, duration: body.duration, type: body.type, zoneType: body.zoneType }
 	);
+});
+
+app.patch('/api/data/waterSchedule', async (c) => {
+	const body = await c.req.json();
+	return handleEditTableEntry(schema.waterSchedule, c, body, "id");
+});
+
+app.put('/api/data/waterSchedule', async (c) => {
+	const body = await c.req.json();
+	const requiredFields = [
+		"id", "type", "userId", "time", "duration", "zoneType"
+	];
+
+	await validateCompleteEntry(c, body, requiredFields);
+
+	return await handleEditTableEntry(schema.waterSchedule, c,body, "id");
 });
 
 app.post('/api/data/fanSchedule', async (c) => {
 	const body = await c.req.json();
 	return handleAddTableEntry(
 		schema.fanSchedule, c,
-		{ userId: body.userId, timeOn: body.timeOn, timeOff: "na" }
+		{ userId: body.userId, timeOn: body.timeOn, duration: body.duration, type: body.type, zoneType: body.zoneType, timeOff: "na" }
 	);
+});
+
+app.patch('/api/data/fanSchedule', async (c) => {
+	const body = await c.req.json();
+	return handleEditTableEntry(schema.waterSchedule, c, body, "id");
+});
+
+app.put('/api/data/fanSchedule', async (c) => {
+	const body = await c.req.json();
+	const requiredFields = [
+		"id", "type", "userId", "time", "duration", "zoneType"
+	];
+
+	await validateCompleteEntry(c, body, requiredFields);
+
+	return await handleEditTableEntry(schema.fanSchedule, c, body, "id");
 });
 
 app.post('/api/data/waterLog', async (c) => {
@@ -319,7 +383,22 @@ export default {
 
 	// Scheduled cron job
 	scheduled: async (event: ScheduledEvent, env: Env, ctx: ExecutionContext) => {
-		await distributeUnsentEmails(env);
+		// Cloudflare provides the cron string that triggered this execution
+		const cron = event.cron;
+
+		switch(cron) {
+			// Send any unsent alerts from the "alerts" table
+			case "*/1 * * * *":
+				ctx.waitUntil(distributeUnsentEmails(env));
+				break;
+			// Once a day, send an OpenMeteo alert to all users
+			// This will tell all users if any upcoming days have bad weather
+			case "* 10 * * *":
+				ctx.waitUntil(distributeWeatherGovEmails(env));
+				break;
+			default:
+				console.log("Unhandled cron:", cron);
+		}
 	}
 };
 

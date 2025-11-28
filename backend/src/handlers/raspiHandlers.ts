@@ -1,12 +1,30 @@
-import { getDB } from "../utilities/databaseQueries";
+import { getDB, insertTableEntry } from "../utilities/databaseQueries";
 import * as schema from '../schema';
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { Context } from "hono";
 import { handleLogin } from "./handleLogin";
 import { requireFirebaseHeader } from "./authHandlers";
 import { normalizeMac } from "../utilities/normalizeMac";
 import { findUserFromMacAddress } from "../utilities/findUserFromMacAddress";
+import { duration } from "drizzle-orm/gel-core";
 
+export async function handleRaspiAlertPosting(c: Context) {
+    try {
+        const db = getDB({ DB: c.env.DB });
+
+        const body = await c.req.json();
+        const { userId, message, severity } = body;
+
+        const entry = await insertTableEntry(db, schema.alert, {
+            userId, message, severity, status: "unhandled"
+        });
+
+        return c.json({ success: true, data: entry })
+    } catch(error) {
+        console.error("[handleRaspiAlertPosting] Error:", error);
+        return c.json({ error: (error as Error).message }, 500);
+    }
+}
 
 export async function handleRaspiPairingStatus(c: Context) {
     try {
@@ -114,7 +132,7 @@ export async function handlePostRaspiSensorReadings(c: Context) {
         const humSide = reading[1];
 
         const tempRead = tempSide.split(":");
-        const humRead = humSide.split(":");
+        const humRead: string = humSide.split(":")[1];
 
         if(!mac) return c.json({ error: "Missing MAC address" }, 400);
 
@@ -132,7 +150,7 @@ export async function handlePostRaspiSensorReadings(c: Context) {
         await db.insert(schema.tempAndHumidity).values({
             userId: userId!,
             type: "humidity",
-            value: humRead[1]
+            value: humRead[1].replace(/}/, "") // A curly brace is left over, remove it when inserting readings to d1
         });
 
         return c.json({ 
@@ -203,49 +221,74 @@ export async function returnPinActionTable(c: Context) {
             .where(eq(schema.fanSchedule.userId, userId!))
             .all();
         // One fanSchedule per user, so this is just a workaround for typescript
-        const fanSchedule = fanSchedules[0];
 
-        const waterSchedules = await db.select()
+        const water1Schedules = await db.select()
             .from(schema.waterSchedule)
-            .where(eq(schema.waterSchedule.userId, userId!))
+            .where(
+                and(
+                    eq(schema.waterSchedule.userId, userId!),
+                    eq(schema.waterSchedule.type, "1")
+                )
+            )
+            .orderBy(asc(schema.waterSchedule.type))
+            .all();
+        
+        const water2Schedules = await db.select()
+            .from(schema.waterSchedule)
+            .where(
+                and(
+                    eq(schema.waterSchedule.userId, userId!),
+                    eq(schema.waterSchedule.type, "2")
+                )
+            )
+            .orderBy(asc(schema.waterSchedule.type))
+            .all();
+        
+            const water3Schedules = await db.select()
+            .from(schema.waterSchedule)
+            .where(
+                and(
+                    eq(schema.waterSchedule.userId, userId!),
+                    eq(schema.waterSchedule.type, "3")
+                )
+            )
             .orderBy(asc(schema.waterSchedule.type))
             .all();
         
         // Map the water schedules to individual pins
-
-        const pinActionTable = [];
-
-        // Push the fan schedule to the pin action table
-        pinActionTable.push({
-            type: "fan",
-            pin: FAN_PIN,
-            time: fanSchedule.timeOn,
-            duration: calculateDurationFromTimes(fanSchedule.timeOn, fanSchedule.timeOff)
-        });
-
-        // Push the water schedules to the pin action table
-        pinActionTable.push({
-            type: "water1",
-            pin: WATER_PIN1,
-            time: waterSchedules[0].time,
-            duration: waterSchedules[0].duration
-        });
-        pinActionTable.push({
-            type: "water2",
-            pin: WATER_PIN2,
-            time: waterSchedules[1].time,
-            duration: waterSchedules[1].duration
-        });
-        pinActionTable.push({
-            type: "water3",
-            pin: WATER_PIN3,
-            time: waterSchedules[2].time,
-            duration: waterSchedules[2].duration
-        });
-        
+        const pinActionTable = [
+            ...fanSchedules.map(s => ({
+                type: "fan",
+                pin: FAN_PIN,
+                userId: s.userId,
+                time: s.timeOn,
+                duration: s.duration
+            })),
+            ...water1Schedules.map(s => ({
+                type: "water1",
+                pin: WATER_PIN1,
+                userId: s.userId,
+                time: s.time,
+                duration: s.duration
+            })),
+            ...water2Schedules.map(s => ({
+                type: "water2",
+                pin: WATER_PIN2,
+                userId: s.userId,
+                time: s.time,
+                duration: s.duration
+            })),
+            ...water3Schedules.map(s => ({
+                type: "water3",
+                pin: WATER_PIN3,
+                userId: s.userId,
+                time: s.time,
+                duration: s.duration
+            }))
+        ];
         for (const item of pinActionTable) {
             delete (item as any).userId;
-        }
+}
         return c.json({ success: true, data: pinActionTable})
 
     } catch(error) {

@@ -78,6 +78,38 @@ export async function handleReturnUserDataByTable(c: Context) {
     }
 }
 
+export async function handleDeleteUserDataByTable(c: Context) {
+    try {
+        const db = getDB({ DB: c.env.DB });
+        const tableName = c.req.param('table');
+        const table = (schema as any)[tableName];
+        const body = await c.req.json();
+        const id = body.id;
+
+        if(!id) return c.json({ error: "id isn't passed in the request"}, 400);
+
+        const records = await db
+            .select()
+            .from(table)
+            .where(eq(table.id, id))
+            .all();
+        
+        // Validate that only one record was found
+        if(records.length < 1) return c.json({ error: `No records found with ID: ${id}`}, 400);
+        else if(records.length > 1) return c.json({ error: `Multiple records found with ID: ${id}`, records: records}, 400);
+
+        const record = await db
+            .delete(table)
+            .where(eq(table.id, id))
+            .run();
+        
+        return c.json({ success: true, record: record }, 200);
+    } catch(error) {
+        console.error("[handleDeleteUserDataByTable] Error:", error);
+        return c.json({ error: (error as Error).message }, 500);
+    }
+}
+
 export async function handleDetermineUserDeviceHealth(c: Context) {
     try {
         // Get the bearer token from the "Authorization" header
