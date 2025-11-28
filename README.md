@@ -11,12 +11,14 @@ Use this for the base url if using productionized workers
 ### `/raspi/:mac/pairingStatus`
 Returns the pairing status of a raspberry pi device
 
+**Example Request**
+
 ```
 GET <base url>/raspi/11:22:33:44:55:66/pairingStatus
 ```
 
 ### `/raspi/:mac/sensorReadings`
-Sends sensor readings from thje Pi to the 
+Sends sensor readings from the Pi to D1.
 
 #### POST Request
 - Sends sensor readings to D1
@@ -31,7 +33,7 @@ This api route returns the "Pin Action Table (PAT)" for a Raspberry Pi. The PAT 
 #### GET Request
 - Retrieves the most recent PAT associated with a Raspberry Pi's MAC address
 
-**Example Request:**
+**Example Request**
 ```
 Content-Type: application/json
 GET <base url>/raspi/1a:2b:3c:4d:5e:6f/pinActionTable
@@ -55,7 +57,7 @@ And will write that data to our D1 database. In our D1 database, there is a fiel
 - Sends the user's Firebase information to our D1 database.
 - Leaves the `raspi_mac` field empty to be filled in later.
 
-**Example Request:** (adds a new user from a firebase account)
+**Example Request** (adds a new user from a firebase account)
 ```
 POST <base url>/api/auth/login
 Authoriation: Bearer <firebase JWT>
@@ -72,7 +74,7 @@ Checks if a device had pings within the last 20 minutes. Checks the following ta
 - waterLog
 - fanLog
 
-**Example Request:** (determines if a user has a device attached, and if it has been seen in the last 20 minutes)
+**Example Request** (determines if a user has a device attached, and if it has been seen in the last 20 minutes)
 ```
 <base url>/api/userDeviceHealth
 Authorization: Bearer <firebase JWT>
@@ -93,7 +95,7 @@ Once paired, the Pi will be associated with the user in the D1 database, allowin
 - Uses the Firebase Bearer token to decode the user's Firebase Uid and retrieve their information in D1.
 - Returns confirmation of the pairing, along with relevant user and device data.
 
-**Example Request:**
+**Example Request**
 
 ```
 POST <base url>/api/auth/pairDevice
@@ -151,7 +153,7 @@ This route returns all data associated with a user by table. All that is needed 
 - A user's bearer token
 - A table name (passed in the url)
 
-**Example Request:** (returns all data associated with the authenticated on the `plantInventory` table
+**Example Request** (returns all data associated with the authenticated on the `plantInventory` table
 ```
 GET <base url>/api/user/plantInventory
 Authorization: Bearer <firebase JWT>
@@ -169,7 +171,7 @@ AgroGo has the following tables in the D1 database. All of which can be accessed
 - Uses the `json` section to specify data on each field.
 - Performs a validation to ensure that an entry isn't created without needed data.
 
-**Example Request:** (adds a new line in the User table with the following values: location = Detroit, email = adomaitisandrew@gmail.com, firstName = Drew, lastName = Adomaitis
+**Example Request** (adds a new line in the User table with the following values: location = Detroit, email = adomaitisandrew@gmail.com, firstName = Drew, lastName = Adomaitis
 ```
 POST <base url>/api/data/user
 Authorization: Bearer <firebase JWT>
@@ -192,6 +194,8 @@ Content-Type: application/json
 **Example Request** (accepted though fields are missing)
 ```
 POST <base url>/api/data/user
+Authorization: Bearer <firebase JWT>
+Content-Type: application/json
 {
   "entries": [
     {
@@ -218,6 +222,8 @@ POST <base url>/api/data/user
 **Example Request** (not accepted because fields are missing)
 ```
 POST <base url>/api/data/user
+Authorization: Bearer <firebase JWT>
+Content-Type: application/json
 {
   "entries": [
     {
@@ -234,6 +240,21 @@ POST <base url>/api/data/user
 
 ```
 
+#### DELETE Request
+- Deletes a record by ID
+- If more or less than 1 record is found, route exits without deleting any data.
+
+**Example Request**
+```
+DELETE <base url>/api/data/user
+Authorization: Bearer <firebase JWT>
+Content-Type: application/json
+{
+  "id": "5evLyFQtkAbQgZ3K0HjKbFLqfRx2"
+}
+
+```
+
 ### `/api/sendEmail`
 Communicates with the Resend API to distribute an email.
 
@@ -243,7 +264,7 @@ Emails must originate from an email from the domain agrogo.org.
 - Pushes an incoming email request to Resend for distribution.
 - Uses the `json` section to specify email contents, recipient, and sender.
 
-**Example Request:** (distributes an email to the email address sent in recipient)
+**Example Request** (distributes an email to the email address sent in recipient)
 ```
 POST <base url>/api/sendEmail
 Authorization: Bearer <firebase JWT>
