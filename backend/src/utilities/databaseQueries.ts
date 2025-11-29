@@ -98,7 +98,7 @@ export async function returnTableEntries<T extends Table>(
 
     // Special case for the tempAndHumidity table
     // Frontend needs this sorted by most recently received items
-    if(table._.name === schema.tempAndHumidity._.name) {
+    if(table === schema.tempAndHumidity) {
         result = await db
             .select()
             .from(table)
