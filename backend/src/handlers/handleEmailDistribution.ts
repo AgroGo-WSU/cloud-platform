@@ -105,7 +105,7 @@ export const emailDistributionHandler = {
                 );
             }
 
-            return new Response(`Email sent successfully! ID: ${data.id}`, {
+            return new Response(`An email was sent successfully! ID: ${data.id}`, {
                 status: 200,
             });
         } catch (error) {
