@@ -56,7 +56,7 @@ import {
 	handleRaspiAlertPosting
 } from './handlers/raspiHandlers';
 import { handleDeleteUserDataByTable, handleDetermineUserDeviceHealth, handleReturnUserDataByTable } from './handlers/userDataHandlers';
-import { distributeWeatherGovEmails, distributeUnsentEmails } from './handlers/scheduledEventHandlers';
+import { distributeWeatherGovEmails, distributeUnsentEmails, checkDeviceHealth } from './handlers/scheduledEventHandlers';
 import { handleEditTableEntry } from './handlers/editEntryHandlers';
 import { validateCompleteEntry } from './utilities/validateCompleteEntries';
 
@@ -390,8 +390,10 @@ export default {
 
 		switch(cron) {
 			// Send any unsent alerts from the "alerts" table
+			// Also, check for device health
 			case "*/1 * * * *":
 				ctx.waitUntil(distributeUnsentEmails(env));
+				ctx.waitUntil(checkDeviceHealth(env))
 				break;
 			// Once a day, send an OpenMeteo alert to all users
 			// This will tell all users if any upcoming days have bad weather

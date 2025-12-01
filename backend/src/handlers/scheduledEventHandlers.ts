@@ -1,8 +1,9 @@
 import { returnTableEntries } from "../utilities/databaseQueries";
 import { getDB } from "../utilities/databaseQueries";
 import { emailDistributionHandler } from "./handleEmailDistribution";
+import { determineDeviceHealthForUser } from "./userDataHandlers";
 import * as schema from "../schema";
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import type { Env } from "../index";
 
 type WeatherGovPointsResponse = {
@@ -322,3 +323,74 @@ const buildWeatherEmailBodyFromApi = async() => {
         console.error("[buildWeatherEmailFromApi] error:", error);
     }
 }
+
+export const checkDeviceHealth = async (env: Env) => {
+    const db = getDB({ DB: env.DB });
+
+    const OFFLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+    const ALERT_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+    const now = Date.now();
+
+    const users = await db.select().from(schema.user).all();
+
+    let offlineCount = 0;
+    let alertsCreated = 0;
+
+    for (const user of users) {
+        try {
+            if(user.raspiMac === "" || user.raspiMac === null) continue;
+
+            const result = await determineDeviceHealthForUser(env, user.id);
+            const message = `
+                Your AgroGo device is offline.
+                Please check power, WiFi, or restart your device.
+            `;
+
+            if (!result.offline) continue;
+
+
+            offlineCount++;
+
+            const lastSeenText = result.lastSeen
+                ? result.lastSeen.toISOString().split(".")[0]
+                : "No data";
+
+            // Check if user already has a recent offline alert
+            const existingAlerts = await db
+                .select()
+                .from(schema.alert)
+                .where(
+                and(
+                    eq(schema.alert.userId, user.id),
+                    eq(schema.alert.message, message)
+                )
+                );
+
+            if (existingAlerts.length > 0) {
+                console.log(
+                `Skipping alert for ${user.email}, already alerted in last 24h`
+                );
+                continue;
+            }
+
+            await db.insert(schema.alert).values({
+                userId: user.id,
+                message,
+                status: "unhandled",
+                severity: "red"
+            });
+
+            alertsCreated++;
+
+            console.log(`Created offline alert for ${user.email}`);
+
+        } catch (err) {
+        console.error(`Error checking health for user ${user.id}`, err);
+        }
+    }
+
+    console.log(
+        `Device health complete — Offline: ${offlineCount}, Alerts created: ${alertsCreated}`
+    );
+};

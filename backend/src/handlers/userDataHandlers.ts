@@ -197,3 +197,77 @@ export async function handleDetermineUserDeviceHealth(c: Context) {
         return c.json({ error: (error as Error).message }, 500);
     }
 }
+
+export async function determineDeviceHealthForUser(env: Env, userId: string) {
+    const offlineThreshold = 5*60*1000; // 5 minutes
+
+    const db = getDB({ DB: env.DB});
+
+      const users = await db
+        .select()
+        .from(schema.user)
+        .where(eq(schema.user.id, userId))
+        .all();
+
+    if (users.length !== 1) {
+        throw new Error(`Expected 1 user, found ${users.length} for ${userId}`);
+    }
+
+    const user = users[0];
+
+    if (!user.raspiMac || user.raspiMac === "") {
+    return {
+      status: "unpaired",
+      lastSeen: null,
+      offline: true
+    };
+  }
+
+  const [tempAndHumidityReadings, waterLogReadings, fanLogReadings] =
+    await Promise.all([
+      db
+        .select()
+        .from(schema.tempAndHumidity)
+        .where(eq(schema.tempAndHumidity.userId, userId))
+        .orderBy(desc(schema.tempAndHumidity.receivedAt))
+        .limit(1),
+
+      db
+        .select()
+        .from(schema.waterLog)
+        .where(eq(schema.waterLog.userId, userId))
+        .orderBy(desc(schema.waterLog.timeConfirmed))
+        .limit(1),
+
+      db
+        .select()
+        .from(schema.fanLog)
+        .where(eq(schema.fanLog.userId, userId))
+        .orderBy(desc(schema.fanLog.timeConfirmed))
+        .limit(1)
+    ]);
+
+    const timestamps = [
+        tempAndHumidityReadings[0]?.receivedAt
+        ? new Date(tempAndHumidityReadings[0].receivedAt).getTime()
+        : 0,
+        waterLogReadings[0]?.timeConfirmed
+        ? new Date(waterLogReadings[0].timeConfirmed).getTime()
+        : 0,
+        fanLogReadings[0]?.timeConfirmed
+        ? new Date(fanLogReadings[0].timeConfirmed).getTime()
+        : 0
+    ];
+
+    const latestTimestamp = Math.max(...timestamps);
+    const lastSeen =
+        latestTimestamp > 0 ? new Date(latestTimestamp) : null;
+
+    const fiveMinutesAgo = Date.now() - offlineThreshold;
+
+    return {
+        status: "paired",
+        lastSeen,
+        offline: !lastSeen || latestTimestamp < fiveMinutesAgo
+    };
+}
