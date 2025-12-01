@@ -150,7 +150,7 @@ export async function handlePostRaspiSensorReadings(c: Context) {
         await db.insert(schema.tempAndHumidity).values({
             userId: userId!,
             type: "humidity",
-            value: humRead[1].replace(/}/, "") // A curly brace is left over, remove it when inserting readings to d1
+            value: humRead.replace(/}/g, "").trim() // A curly brace is left over, remove it when inserting readings to d1
         });
 
         return c.json({ 

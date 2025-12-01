@@ -181,8 +181,8 @@ export async function handleDetermineUserDeviceHealth(c: Context) {
         const latestReadingTime = latestTimestamp > 0 ? new Date(latestTimestamp) : null;
 
         // Determine if the device has been active in the last 20 minutes
-        const twentyMinutesAgo = Date.now() - 20*60*1000;
-        const isDeviceActive = latestTimestamp > twentyMinutesAgo;
+        const fiveMinutesAgo = Date.now() - 5*60*1000;
+        const isDeviceActive = latestTimestamp > fiveMinutesAgo;
 
         // Return a flag determining if the device was seen in the last
         // 20 minutes, and the last time it was seen
